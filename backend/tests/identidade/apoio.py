@@ -21,6 +21,7 @@ from assura.identidade import (
     Usuario,
     Usuarios,
 )
+from assura.identidade.aplicacao.portas import GeradorDeResumoDeSenha
 from tests.apoio import AUTOR_DE_TESTE
 
 INSTANTE = datetime(2026, 10, 4, 12, 0, tzinfo=UTC)
@@ -28,6 +29,9 @@ AUTOR = AUTOR_DE_TESTE
 CNPJ_NUMERICO = "12.345.678/0001-95"
 OUTRO_CNPJ_NUMERICO = "11.222.333/0001-81"
 CNPJ_ALFANUMERICO = "12.ABC.345/01DE-35"
+SENHA = "senha-correta-123"
+OUTRA_SENHA = "outra-senha-456"
+CHAVE_DE_SESSAO_DE_TESTE = "chave-de-sessao-dos-testes-com-32-bytes-ou-mais"
 
 
 def cadastrar_empresa(
@@ -77,3 +81,25 @@ def ler_historico_do_objeto(
         pagina=Pagina(),
     )
     return list(reversed(registros))
+
+
+def criar_usuario_com_senha(
+    usuarios: Usuarios,
+    registrar_acao: RegistrarAcao,
+    gerador_de_resumo: GeradorDeResumoDeSenha,
+    *,
+    email: str = EMAIL,
+    senha: str = SENHA,
+    senha_provisoria: bool = False,
+    administrador_do_sistema: bool = False,
+) -> Usuario:
+    """Grava um usuário com senha sem passar pelos casos de uso de senha."""
+    usuario = cadastrar_usuario(usuarios, registrar_acao, email=email)
+    resumo = gerador_de_resumo.gerar(senha)
+    if senha_provisoria:
+        usuario.definir_senha_provisoria(resumo)
+    else:
+        usuario.definir_senha_definitiva(resumo)
+    usuario.administrador_do_sistema = administrador_do_sistema
+    usuarios.atualizar(usuario)
+    return usuario

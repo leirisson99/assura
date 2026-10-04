@@ -27,8 +27,11 @@ python -m venv .venv
 pip install -e ".[dev]"
 copy .env.example .env          # Linux/macOS: cp .env.example .env
 alembic upgrade head
+python -m assura.criar_root --nome "Seu Nome" --email voce@empresa.com   # só na primeira vez
 uvicorn assura.main:app --reload
 ```
+
+O `.env` precisa de `ASSURA_CHAVE_DA_SESSAO` (chave que assina as sessões; gere uma com `python -c "import secrets; print(secrets.token_urlsafe(48))"`). O `criar_root` cria o primeiro administrador do sistema e pede a senha sem mostrá-la; ele recusa se já existir um administrador.
 
 API em http://localhost:8000 (documentação em `/docs`).
 

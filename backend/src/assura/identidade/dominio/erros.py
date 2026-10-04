@@ -64,3 +64,31 @@ class VinculoJaAtivo(ErroDeIdentidade):
 
 class EmpresaDesativadaNaoAceitaVinculo(ErroDeIdentidade):
     pass
+
+
+class SenhaInvalida(ErroDeIdentidade):
+    pass
+
+
+class CredenciaisInvalidas(ErroDeIdentidade):
+    pass
+
+
+class SenhaAtualIncorreta(ErroDeIdentidade):
+    pass
+
+
+class PermissaoNegada(ErroDeIdentidade):
+    pass
+
+
+class SenhaProvisoriaPrecisaSerTrocada(ErroDeIdentidade):
+    pass
+
+
+class AdministradorDoSistemaJaExiste(ErroDeIdentidade):
+    pass
+
+
+class SessaoInvalida(ErroDeIdentidade):
+    pass

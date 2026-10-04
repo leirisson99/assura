@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import pytest
 from sqlalchemy.orm import Session
 
@@ -10,7 +12,9 @@ from assura.identidade import (
     criar_usuarios,
     criar_vinculos,
 )
-from tests.identidade.apoio import INSTANTE
+from assura.identidade.infraestrutura.resumo_de_senha_argon2 import GeradorDeResumoArgon2
+from assura.identidade.infraestrutura.sessao_jwt import EmissorDeSessaoJwt
+from tests.identidade.apoio import CHAVE_DE_SESSAO_DE_TESTE, INSTANTE
 
 
 @pytest.fixture
@@ -31,3 +35,13 @@ def usuarios(sessao: Session) -> Usuarios:
 @pytest.fixture
 def vinculos(sessao: Session) -> Vinculos:
     return criar_vinculos(sessao)
+
+
+@pytest.fixture(scope="session")
+def gerador_de_resumo() -> GeradorDeResumoArgon2:
+    return GeradorDeResumoArgon2()
+
+
+@pytest.fixture
+def emissor_de_sessao() -> EmissorDeSessaoJwt:
+    return EmissorDeSessaoJwt(chave=CHAVE_DE_SESSAO_DE_TESTE, validade=timedelta(hours=8))
