@@ -1,10 +1,9 @@
 from datetime import UTC, datetime
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy.orm import Session
 
 from assura.historico import (
-    Autor,
     ConsultarHistorico,
     FiltroDoHistorico,
     ObjetoAfetado,
@@ -14,10 +13,18 @@ from assura.historico import (
     SolicitanteDaConsulta,
     criar_historico,
 )
-from assura.identidade import CadastrarEmpresa, Empresa, Empresas
+from assura.identidade import (
+    CadastrarEmpresa,
+    CadastrarUsuario,
+    Empresa,
+    Empresas,
+    Usuario,
+    Usuarios,
+)
+from tests.apoio import AUTOR_DE_TESTE
 
 INSTANTE = datetime(2026, 10, 4, 12, 0, tzinfo=UTC)
-AUTOR = Autor.usuario(uuid4())
+AUTOR = AUTOR_DE_TESTE
 CNPJ_NUMERICO = "12.345.678/0001-95"
 OUTRO_CNPJ_NUMERICO = "11.222.333/0001-81"
 CNPJ_ALFANUMERICO = "12.ABC.345/01DE-35"
@@ -41,6 +48,32 @@ def ler_historico_da_empresa(sessao: Session, empresa_id: UUID) -> list[Registro
     registros = ConsultarHistorico(criar_historico(sessao)).executar(
         solicitante=SolicitanteDaConsulta.administrador_do_sistema(),
         filtro=FiltroDoHistorico(objeto=ObjetoAfetado("empresa", str(empresa_id))),
+        pagina=Pagina(),
+    )
+    return list(reversed(registros))
+
+
+EMAIL = "maria@empresa.com"
+OUTRO_EMAIL = "joao@empresa.com"
+
+
+def cadastrar_usuario(
+    usuarios: Usuarios,
+    registrar_acao: RegistrarAcao,
+    *,
+    nome: str = "Maria Souza",
+    email: str = EMAIL,
+) -> Usuario:
+    return CadastrarUsuario(usuarios, registrar_acao).executar(autor=AUTOR, nome=nome, email=email)
+
+
+def ler_historico_do_objeto(
+    sessao: Session, tipo_do_objeto: str, identificador: UUID
+) -> list[RegistroDeHistorico]:
+    """Registros do objeto, do mais antigo para o mais recente."""
+    registros = ConsultarHistorico(criar_historico(sessao)).executar(
+        solicitante=SolicitanteDaConsulta.administrador_do_sistema(),
+        filtro=FiltroDoHistorico(objeto=ObjetoAfetado(tipo_do_objeto, str(identificador))),
         pagina=Pagina(),
     )
     return list(reversed(registros))

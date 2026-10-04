@@ -10,8 +10,8 @@ from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import Session
 
 from assura.configuracao import configuracao
-from assura.identidade.infraestrutura.tabela import tabela_empresa
-from tests.apoio import gerar_cnpj_valido
+from assura.identidade.infraestrutura.tabela import tabela_empresa, tabela_usuario
+from tests.apoio import ID_DO_AUTOR_DE_TESTE, gerar_cnpj_valido
 
 CAMINHO_DO_ALEMBIC_INI = Path(__file__).resolve().parent.parent / "alembic.ini"
 
@@ -59,11 +59,12 @@ def sessao(motor_de_teste: Engine) -> Iterator[Session]:
     """Sessão dentro de uma transação desfeita no fim do teste.
 
     Os commits da sessão viram savepoints; nada fica gravado, e o histórico (que não aceita
-    exclusão) não precisa ser limpo.
+    exclusão) não precisa ser limpo. Já contém o usuário autor de teste.
     """
     with motor_de_teste.connect() as conexao:
         transacao = conexao.begin()
         sessao_de_teste = Session(bind=conexao, join_transaction_mode="create_savepoint")
+        gravar_usuario(sessao_de_teste, ID_DO_AUTOR_DE_TESTE)
         yield sessao_de_teste
         sessao_de_teste.close()
         transacao.rollback()
@@ -84,5 +85,28 @@ def criar_empresa(sessao: Session) -> Callable[[], UUID]:
             )
         )
         return empresa_id
+
+    return criar
+
+
+def gravar_usuario(sessao: Session, usuario_id: UUID) -> None:
+    sessao.execute(
+        insert(tabela_usuario).values(
+            id=usuario_id,
+            nome=f"Usuário {usuario_id}",
+            email=f"{usuario_id}@teste.com",
+            situacao="ativo",
+        )
+    )
+
+
+@pytest.fixture
+def criar_usuario(sessao: Session) -> Callable[[], UUID]:
+    """Grava um usuário direto na tabela, sem registro de histórico, e devolve o id."""
+
+    def criar() -> UUID:
+        usuario_id = uuid7()
+        gravar_usuario(sessao, usuario_id)
+        return usuario_id
 
     return criar

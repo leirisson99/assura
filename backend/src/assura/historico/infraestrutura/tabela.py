@@ -18,7 +18,7 @@ tabela_registro_de_historico = Table(
     metadados,
     Column("id", Uuid, primary_key=True),
     Column("autor_tipo", Text, nullable=False),
-    Column("autor_usuario_id", Uuid, nullable=True),
+    Column("autor_usuario_id", Uuid, ForeignKey("usuario.id", ondelete="RESTRICT"), nullable=True),
     Column("tipo_de_acao", Text, nullable=False),
     Column("objeto_tipo", Text, nullable=False),
     Column("objeto_id", Text, nullable=False),

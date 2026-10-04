@@ -144,11 +144,13 @@ def test_filtro_por_periodo_inclui_os_limites(
     assert identificadores(resultado) == [registros[2].id, registros[1].id]
 
 
-def test_filtro_por_autor(sessao: Session, criar_empresa: Callable[[], UUID]) -> None:
+def test_filtro_por_autor(
+    sessao: Session, criar_empresa: Callable[[], UUID], criar_usuario: Callable[[], UUID]
+) -> None:
     empresa_id = criar_empresa()
-    autor = Autor.usuario(uuid4())
+    autor = Autor.usuario(criar_usuario())
     do_autor = registrar(sessao, empresa_id=empresa_id, autor=autor)
-    registrar(sessao, empresa_id=empresa_id, autor=Autor.usuario(uuid4()))
+    registrar(sessao, empresa_id=empresa_id, autor=Autor.usuario(criar_usuario()))
     registrar(sessao, empresa_id=empresa_id, autor=Autor.sistema())
 
     resultado = consultar(
@@ -160,10 +162,12 @@ def test_filtro_por_autor(sessao: Session, criar_empresa: Callable[[], UUID]) ->
     assert identificadores(resultado) == [do_autor.id]
 
 
-def test_filtro_por_autor_sistema(sessao: Session, criar_empresa: Callable[[], UUID]) -> None:
+def test_filtro_por_autor_sistema(
+    sessao: Session, criar_empresa: Callable[[], UUID], criar_usuario: Callable[[], UUID]
+) -> None:
     empresa_id = criar_empresa()
     do_sistema = registrar(sessao, empresa_id=empresa_id, autor=Autor.sistema())
-    registrar(sessao, empresa_id=empresa_id, autor=Autor.usuario(uuid4()))
+    registrar(sessao, empresa_id=empresa_id, autor=Autor.usuario(criar_usuario()))
 
     resultado = consultar(
         sessao,
@@ -205,10 +209,10 @@ def test_filtro_por_objeto(sessao: Session, criar_empresa: Callable[[], UUID]) -
 
 
 def test_filtros_combinados_exigem_todos(
-    sessao: Session, criar_empresa: Callable[[], UUID]
+    sessao: Session, criar_empresa: Callable[[], UUID], criar_usuario: Callable[[], UUID]
 ) -> None:
     empresa_id = criar_empresa()
-    autor = Autor.usuario(uuid4())
+    autor = Autor.usuario(criar_usuario())
     procurado = registrar(
         sessao,
         empresa_id=empresa_id,
@@ -253,11 +257,11 @@ def test_consulta_sem_resultados_devolve_lista_vazia(sessao: Session) -> None:
 
 
 def test_registro_consultado_e_igual_ao_registrado(
-    sessao: Session, criar_empresa: Callable[[], UUID]
+    sessao: Session, criar_empresa: Callable[[], UUID], criar_usuario: Callable[[], UUID]
 ) -> None:
     empresa_id = criar_empresa()
     registrado = RegistrarAcao(criar_historico(sessao), relogio=lambda: PRIMEIRO_DIA).executar(
-        autor=Autor.usuario(uuid4()),
+        autor=Autor.usuario(criar_usuario()),
         tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
         objeto=ObjetoAfetado(tipo="exemplo", identificador="1"),
         empresa_id=empresa_id,

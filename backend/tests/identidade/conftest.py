@@ -2,7 +2,14 @@ import pytest
 from sqlalchemy.orm import Session
 
 from assura.historico import RegistrarAcao, criar_historico
-from assura.identidade import Empresas, criar_empresas
+from assura.identidade import (
+    Empresas,
+    Usuarios,
+    Vinculos,
+    criar_empresas,
+    criar_usuarios,
+    criar_vinculos,
+)
 from tests.identidade.apoio import INSTANTE
 
 
@@ -14,3 +21,13 @@ def empresas(sessao: Session) -> Empresas:
 @pytest.fixture
 def registrar_acao(sessao: Session) -> RegistrarAcao:
     return RegistrarAcao(criar_historico(sessao), relogio=lambda: INSTANTE)
+
+
+@pytest.fixture
+def usuarios(sessao: Session) -> Usuarios:
+    return criar_usuarios(sessao)
+
+
+@pytest.fixture
+def vinculos(sessao: Session) -> Vinculos:
+    return criar_vinculos(sessao)
