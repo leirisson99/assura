@@ -35,9 +35,13 @@ pythonpath = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py314"
+extend-exclude = [".specify", "specs"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "N", "SIM"]
+# A constituição pede exceções com nome do domínio (ex.: UltimoResponsavelNaoPodeSerRemovido),
+# sem o sufixo "Error".
+ignore = ["N818"]
 
 [tool.mypy]
 python_version = "3.14"
