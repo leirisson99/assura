@@ -44,11 +44,12 @@ prevalece.
 ### V. Papéis fixos e simples
 
 - Usuário é identidade. Setor, cargo e permissões ficam no vínculo com a empresa.
-- Papéis existentes: administrador do sistema, administrador da empresa e, por projeto,
-  responsável, membro e leitor.
+- Papéis existentes: administrador do sistema, administrador da empresa; por projeto, responsável,
+  membro e leitor; por auditoria avulsa, responsável; e, por auditoria, auditor líder e auditor.
 - Cargo não é papel: cargo serve para atribuir trabalho, papel define o que a pessoa pode fazer.
-- Toda empresa tem ao menos um administrador e todo projeto tem ao menos um responsável. O
-  sistema impede a remoção do último.
+- Toda empresa tem ao menos um administrador, todo projeto e toda auditoria avulsa têm ao menos um
+  responsável, e toda auditoria iniciada tem ao menos um auditor líder. O sistema impede a remoção
+  do último.
 - Permissões configuráveis não entram enquanto os papéis fixos atenderem.
 
 ### VI. O campo vem primeiro
@@ -162,10 +163,19 @@ prevalece.
 
 - Classificação dos achados (termos e níveis usados pelos auditores).
 - Formato do relatório (modelo real usado pelos auditores).
-- Auditoria com um auditor ou com equipe auditora.
-- Auditoria sempre dentro de um projeto ou também avulsa.
 - Edição vigente da ISO 19011 e normas cobertas (ISO 9001, 14001, 45001).
 - Provedores de transcrição e de modelo de linguagem (somente na Fase 2).
+
+## Decisões tomadas
+
+- **2026-10-04:** a auditoria é realizada por uma equipe auditora, não por um único auditor. A
+  auditoria pode ser criada sem equipe, mas só pode ser iniciada com ao menos um auditor líder;
+  depois de iniciada, o sistema impede a remoção do último. O auditor líder pode realizar todas as
+  ações da auditoria, inclusive aprovar o relatório; os demais auditores executam os itens do
+  checklist.
+- **2026-10-04:** a auditoria pode ser realizada dentro de um projeto ou de forma avulsa, sem
+  vínculo com projeto. A auditoria avulsa tem ao menos um responsável, papel equivalente ao
+  responsável do projeto, e só pode ser iniciada depois de vinculada a ao menos um auditor líder.
 
 ## Governança
 
@@ -176,4 +186,4 @@ prevalece.
   incrementa a versão principal; acréscimo incrementa a secundária; ajuste de redação
   incrementa a de correção.
 
-**Versão**: 1.0.0 (rascunho) | **Ratificada**: TODO(RATIFICATION_DATE): pendente de ratificação pelos três sócios | **Última alteração**: 2026-10-02
+**Versão**: 1.0.0 (rascunho) | **Ratificada**: TODO(RATIFICATION_DATE): pendente de ratificação pelos três sócios | **Última alteração**: 2026-10-04
