@@ -41,6 +41,8 @@ mypy
 pytest
 ```
 
+Os testes de integração usam o banco `assura_teste` no mesmo PostgreSQL do `docker compose`. O `pytest` cria esse banco e aplica as migrações automaticamente; cada teste roda numa transação desfeita no fim. Para usar outro banco, defina `ASSURA_URL_BANCO_DE_DADOS_DE_TESTE`.
+
 ### Frontend (Next.js)
 
 ```sh
