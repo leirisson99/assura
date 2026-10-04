@@ -92,3 +92,19 @@ class AdministradorDoSistemaJaExiste(ErroDeIdentidade):
 
 class SessaoInvalida(ErroDeIdentidade):
     pass
+
+
+class VinculoDesativadoNaoPodeSerAdministrador(ErroDeIdentidade):
+    pass
+
+
+class VinculoJaEAdministrador(ErroDeIdentidade):
+    pass
+
+
+class VinculoNaoEAdministrador(ErroDeIdentidade):
+    pass
+
+
+class UltimoAdministradorNaoPodeSerRemovido(ErroDeIdentidade):
+    pass

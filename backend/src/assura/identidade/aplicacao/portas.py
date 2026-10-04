@@ -76,6 +76,15 @@ class Vinculos(Protocol):
 
     def existe(self, usuario_id: UUID, empresa_id: UUID) -> bool: ...
 
+    def obter_do_usuario_na_empresa(self, usuario_id: UUID, empresa_id: UUID) -> Vinculo | None: ...
+
+    def listar_ativos_do_usuario(self, usuario_id: UUID) -> list[Vinculo]: ...
+
+    def contar_administradores_ativos(self, empresa_id: UUID) -> int:
+        """Bloqueia os vínculos administradores ativos da empresa até o fim da transação, para
+        que duas remoções simultâneas não deixem a empresa sem administrador."""
+        ...
+
     def listar_da_empresa(
         self, empresa_id: UUID, situacao: SituacaoDoVinculo | None, pagina: Pagina
     ) -> list[UsuarioDaEmpresa]:

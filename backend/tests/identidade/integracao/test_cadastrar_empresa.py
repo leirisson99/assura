@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from assura.historico import Autor, RegistrarAcao
+from assura.historico import RegistrarAcao
 from assura.identidade import (
     CadastrarEmpresa,
     CnpjInvalido,
@@ -10,6 +10,7 @@ from assura.identidade import (
     DesativarEmpresa,
     Empresa,
     Empresas,
+    PermissaoNegada,
     RazaoSocialInvalida,
     SituacaoDaEmpresa,
 )
@@ -20,6 +21,8 @@ from tests.identidade.apoio import (
     CNPJ_ALFANUMERICO,
     CNPJ_NUMERICO,
     INSTANTE,
+    SOLICITANTE,
+    SOLICITANTE_COMUM,
     cadastrar_empresa,
     ler_historico_da_empresa,
 )
@@ -79,7 +82,9 @@ def test_cnpj_de_empresa_desativada_nao_pode_ser_reusado(
     empresas: Empresas, registrar_acao: RegistrarAcao
 ) -> None:
     empresa = cadastrar_empresa(empresas, registrar_acao)
-    DesativarEmpresa(empresas, registrar_acao).executar(autor=AUTOR, empresa_id=empresa.id)
+    DesativarEmpresa(empresas, registrar_acao).executar(
+        solicitante=SOLICITANTE, empresa_id=empresa.id
+    )
 
     with pytest.raises(CnpjJaCadastrado):
         cadastrar_empresa(empresas, registrar_acao)
@@ -120,13 +125,15 @@ def test_restricao_do_banco_recusa_cnpj_repetido_que_passou_pela_verificacao(
     assert contar_empresas(sessao) == 1
 
 
-def test_autor_sistema_tambem_pode_cadastrar(
+def test_quem_nao_e_administrador_do_sistema_nao_cadastra_empresa(
     sessao: Session, empresas: Empresas, registrar_acao: RegistrarAcao
 ) -> None:
-    empresa = CadastrarEmpresa(empresas, registrar_acao).executar(
-        autor=Autor.sistema(), razao_social="Empresa X", nome_fantasia=None, cnpj=CNPJ_NUMERICO
-    )
+    with pytest.raises(PermissaoNegada):
+        CadastrarEmpresa(empresas, registrar_acao).executar(
+            solicitante=SOLICITANTE_COMUM,
+            razao_social="Empresa X",
+            nome_fantasia=None,
+            cnpj=CNPJ_NUMERICO,
+        )
 
-    [registro] = ler_historico_da_empresa(sessao, empresa.id)
-    assert registro.autor == Autor.sistema()
-    assert registro.detalhes["nome_fantasia"] is None
+    assert contar_empresas(sessao) == 0

@@ -32,6 +32,8 @@ class TipoDeAcao(StrEnum):
     VINCULO_REATIVADO = "vinculo_reativado"
     SENHA_TROCADA = "senha_trocada"
     SENHA_REDEFINIDA = "senha_redefinida"
+    ADMINISTRADOR_DEFINIDO = "administrador_definido"
+    ADMINISTRADOR_REMOVIDO = "administrador_removido"
 
 
 class TipoDeAutor(StrEnum):

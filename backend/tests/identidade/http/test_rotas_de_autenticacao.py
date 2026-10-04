@@ -1,17 +1,13 @@
-from collections.abc import Iterator
 from datetime import UTC, datetime, timedelta
 from uuid import UUID, uuid4
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
-from assura.compartilhado.infraestrutura.http import obter_sessao_do_banco
 from assura.historico import RegistrarAcao
 from assura.identidade import Usuario, Usuarios
 from assura.identidade.aplicacao.portas import GeradorDeResumoDeSenha
 from assura.identidade.infraestrutura.sessao_jwt import EmissorDeSessaoJwt
-from assura.main import app
 from tests.identidade.apoio import (
     CHAVE_DE_SESSAO_DE_TESTE,
     EMAIL,
@@ -20,16 +16,6 @@ from tests.identidade.apoio import (
     SENHA,
     criar_usuario_com_senha,
 )
-
-
-@pytest.fixture
-def cliente(sessao: Session) -> Iterator[TestClient]:
-    def usar_sessao_de_teste() -> Iterator[Session]:
-        yield sessao
-
-    app.dependency_overrides[obter_sessao_do_banco] = usar_sessao_de_teste
-    yield TestClient(app)
-    app.dependency_overrides.clear()
 
 
 @pytest.fixture

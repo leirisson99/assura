@@ -1,101 +1,79 @@
-from datetime import datetime, timedelta
-from functools import cache
+from datetime import datetime
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, status
-from fastapi.responses import JSONResponse
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import APIRouter, Depends, FastAPI, status
 from pydantic import BaseModel
 
-from assura.compartilhado.infraestrutura.http import SessaoDoBanco
-from assura.configuracao import configuracao
-from assura.historico import RegistrarAcao, criar_historico
-from assura.identidade.aplicacao.autenticar import Autenticar
-from assura.identidade.aplicacao.portas import (
-    EmissorDeSessao,
-    GeradorDeResumoDeSenha,
-    UsuarioAutenticado,
+from assura.compartilhado.infraestrutura.http import (
+    CategoriaDeErro,
+    SessaoDoBanco,
+    registrar_traducao_de_erros,
 )
-from assura.identidade.aplicacao.redefinir_senha import RedefinirSenha
+from assura.historico import ConsultaAOutraEmpresaNaoPermitida, ErroDoHistorico
+from assura.identidade.aplicacao.autenticar import Autenticar
+from assura.identidade.aplicacao.portas import EmissorDeSessao
 from assura.identidade.aplicacao.trocar_propria_senha import TrocarPropriaSenha
 from assura.identidade.dominio.erros import (
+    AdministradorDoSistemaJaExiste,
+    CnpjJaCadastrado,
     CredenciaisInvalidas,
+    EmailJaCadastrado,
+    EmpresaDesativadaNaoAceitaVinculo,
+    EmpresaJaAtiva,
+    EmpresaJaDesativada,
+    EmpresaNaoEncontrada,
     ErroDeIdentidade,
     PermissaoNegada,
-    SenhaAtualIncorreta,
-    SenhaInvalida,
+    SenhaProvisoriaPrecisaSerTrocada,
     SessaoInvalida,
+    UltimoAdministradorNaoPodeSerRemovido,
     UsuarioNaoEncontrado,
+    VinculoDesativadoNaoPodeSerAdministrador,
+    VinculoJaAtivo,
+    VinculoJaDesativado,
+    VinculoJaEAdministrador,
+    VinculoJaExiste,
+    VinculoNaoEAdministrador,
+    VinculoNaoEncontrado,
 )
-from assura.identidade.dominio.usuario import SituacaoDoUsuario, Usuario
-from assura.identidade.infraestrutura.resumo_de_senha_argon2 import GeradorDeResumoArgon2
-from assura.identidade.infraestrutura.sessao_jwt import EmissorDeSessaoJwt
+from assura.identidade.infraestrutura.dependencias_http import (
+    GeradorDeResumo,
+    RepositoriosDaRequisicao,
+    UsuarioDaSessao,
+    obter_emissor_de_sessao,
+)
+from assura.identidade.infraestrutura.rotas_de_empresas import roteador_de_empresas
+from assura.identidade.infraestrutura.rotas_de_historico import roteador_de_historico
+from assura.identidade.infraestrutura.rotas_de_usuarios import roteador_de_usuarios
+from assura.identidade.infraestrutura.rotas_de_vinculos import roteador_de_vinculos
 from assura.identidade.infraestrutura.usuarios_sqlalchemy import criar_usuarios
 
-STATUS_POR_ERRO: dict[type[Exception], int] = {
-    CredenciaisInvalidas: status.HTTP_401_UNAUTHORIZED,
-    PermissaoNegada: status.HTTP_403_FORBIDDEN,
-    UsuarioNaoEncontrado: status.HTTP_404_NOT_FOUND,
-    SenhaInvalida: status.HTTP_422_UNPROCESSABLE_CONTENT,
-    SenhaAtualIncorreta: status.HTTP_422_UNPROCESSABLE_CONTENT,
+CATEGORIAS_DOS_ERROS_DE_IDENTIDADE: dict[type[Exception], CategoriaDeErro] = {
+    CredenciaisInvalidas: CategoriaDeErro.NAO_AUTENTICADO,
+    SessaoInvalida: CategoriaDeErro.NAO_AUTENTICADO,
+    PermissaoNegada: CategoriaDeErro.SEM_PERMISSAO,
+    SenhaProvisoriaPrecisaSerTrocada: CategoriaDeErro.SEM_PERMISSAO,
+    EmpresaNaoEncontrada: CategoriaDeErro.NAO_ENCONTRADO,
+    UsuarioNaoEncontrado: CategoriaDeErro.NAO_ENCONTRADO,
+    VinculoNaoEncontrado: CategoriaDeErro.NAO_ENCONTRADO,
+    AdministradorDoSistemaJaExiste: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    CnpjJaCadastrado: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    EmailJaCadastrado: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    EmpresaDesativadaNaoAceitaVinculo: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    EmpresaJaAtiva: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    EmpresaJaDesativada: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    UltimoAdministradorNaoPodeSerRemovido: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    VinculoDesativadoNaoPodeSerAdministrador: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    VinculoJaAtivo: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    VinculoJaDesativado: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    VinculoJaEAdministrador: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    VinculoJaExiste: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
+    VinculoNaoEAdministrador: CategoriaDeErro.CONFLITO_COM_O_ESTADO,
 }
-
-esquema_bearer = HTTPBearer(auto_error=False)
-
-
-@cache
-def obter_gerador_de_resumo() -> GeradorDeResumoDeSenha:
-    return GeradorDeResumoArgon2()
-
-
-def obter_emissor_de_sessao() -> EmissorDeSessao:
-    return EmissorDeSessaoJwt(
-        chave=configuracao.chave_da_sessao,
-        validade=timedelta(hours=configuracao.validade_da_sessao_em_horas),
-    )
-
-
-def recusar_sessao() -> HTTPException:
-    return HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="sessão ausente, vencida ou inválida",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-
-def obter_usuario_da_sessao(
-    sessao: SessaoDoBanco,
-    emissor_de_sessao: Annotated[EmissorDeSessao, Depends(obter_emissor_de_sessao)],
-    credenciais: Annotated[HTTPAuthorizationCredentials | None, Depends(esquema_bearer)],
-) -> Usuario:
-    """Aceita senha provisória. A situação do usuário é lida do banco a cada requisição."""
-    if credenciais is None:
-        raise recusar_sessao()
-    try:
-        usuario = criar_usuarios(sessao).obter(emissor_de_sessao.ler(credenciais.credentials))
-    except SessaoInvalida, UsuarioNaoEncontrado:
-        raise recusar_sessao() from None
-    if usuario.situacao is not SituacaoDoUsuario.ATIVO:
-        raise recusar_sessao()
-    return usuario
-
-
-def exigir_senha_definitiva(
-    usuario: Annotated[Usuario, Depends(obter_usuario_da_sessao)],
-) -> UsuarioAutenticado:
-    """Padrão das rotas: com senha provisória, só "quem sou eu" e "trocar senha" funcionam."""
-    if usuario.senha_provisoria:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="troque a senha provisória antes de continuar",
-        )
-    return UsuarioAutenticado.de(usuario)
-
-
-UsuarioDaSessao = Annotated[Usuario, Depends(obter_usuario_da_sessao)]
-UsuarioComSenhaDefinitiva = Annotated[UsuarioAutenticado, Depends(exigir_senha_definitiva)]
-GeradorDeResumo = Annotated[GeradorDeResumoDeSenha, Depends(obter_gerador_de_resumo)]
+CATEGORIAS_DOS_ERROS_DO_HISTORICO: dict[type[Exception], CategoriaDeErro] = {
+    ConsultaAOutraEmpresaNaoPermitida: CategoriaDeErro.SEM_PERMISSAO,
+}
 
 
 class DadosDeLogin(BaseModel):
@@ -123,12 +101,7 @@ class DadosDeTrocaDeSenha(BaseModel):
     nova_senha: str
 
 
-class DadosDeRedefinicaoDeSenha(BaseModel):
-    senha_provisoria: str
-
-
 roteador_de_autenticacao = APIRouter(prefix="/autenticacao", tags=["autenticação"])
-roteador_de_usuarios = APIRouter(prefix="/usuarios", tags=["usuários"])
 
 
 @roteador_de_autenticacao.post("/login")
@@ -163,37 +136,23 @@ def informar_usuario_da_sessao(usuario: UsuarioDaSessao) -> DadosDoUsuarioDaSess
 def trocar_a_propria_senha(
     dados: DadosDeTrocaDeSenha,
     usuario: UsuarioDaSessao,
-    sessao: SessaoDoBanco,
+    repositorios: RepositoriosDaRequisicao,
     gerador_de_resumo: GeradorDeResumo,
 ) -> None:
     TrocarPropriaSenha(
-        criar_usuarios(sessao), gerador_de_resumo, RegistrarAcao(criar_historico(sessao))
+        repositorios.usuarios, gerador_de_resumo, repositorios.registrar_acao
     ).executar(usuario_id=usuario.id, senha_atual=dados.senha_atual, nova_senha=dados.nova_senha)
-    sessao.commit()
+    repositorios.sessao.commit()
 
 
-@roteador_de_usuarios.post("/{usuario_id}/senha", status_code=status.HTTP_204_NO_CONTENT)
-def redefinir_a_senha(
-    usuario_id: UUID,
-    dados: DadosDeRedefinicaoDeSenha,
-    solicitante: UsuarioComSenhaDefinitiva,
-    sessao: SessaoDoBanco,
-    gerador_de_resumo: GeradorDeResumo,
-) -> None:
-    RedefinirSenha(
-        criar_usuarios(sessao), gerador_de_resumo, RegistrarAcao(criar_historico(sessao))
-    ).executar(
-        solicitante=solicitante, usuario_id=usuario_id, senha_provisoria=dados.senha_provisoria
-    )
-    sessao.commit()
-
-
-def responder_erro_de_identidade(_: Request, erro: Exception) -> JSONResponse:
-    situacao = STATUS_POR_ERRO.get(type(erro), status.HTTP_422_UNPROCESSABLE_CONTENT)
-    return JSONResponse(status_code=situacao, content={"detail": str(erro)})
-
-
-def registrar_rotas_de_identidade(app: FastAPI) -> None:
-    app.include_router(roteador_de_autenticacao)
-    app.include_router(roteador_de_usuarios)
-    app.add_exception_handler(ErroDeIdentidade, responder_erro_de_identidade)
+def registrar_rotas_de_identidade(aplicacao: FastAPI) -> None:
+    for roteador in (
+        roteador_de_autenticacao,
+        roteador_de_empresas,
+        roteador_de_usuarios,
+        roteador_de_vinculos,
+        roteador_de_historico,
+    ):
+        aplicacao.include_router(roteador)
+    registrar_traducao_de_erros(aplicacao, ErroDeIdentidade, CATEGORIAS_DOS_ERROS_DE_IDENTIDADE)
+    registrar_traducao_de_erros(aplicacao, ErroDoHistorico, CATEGORIAS_DOS_ERROS_DO_HISTORICO)

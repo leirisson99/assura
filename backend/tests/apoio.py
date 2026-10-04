@@ -1,6 +1,8 @@
 import random
 from uuid import UUID
 
+from argon2 import PasswordHasher
+
 from assura.historico import Autor
 from assura.identidade.dominio.cnpj import calcular_digitos_verificadores
 
@@ -12,3 +14,7 @@ AUTOR_DE_TESTE = Autor.usuario(ID_DO_AUTOR_DE_TESTE)
 def gerar_cnpj_valido() -> str:
     raiz_e_ordem = "".join(random.choices("0123456789", k=12))
     return raiz_e_ordem + calcular_digitos_verificadores(raiz_e_ordem)
+
+
+# Custo mínimo do argon2 só nos testes: a segurança do resumo não é o que está sendo testado.
+GERADOR_DE_RESUMO_RAPIDO = PasswordHasher(time_cost=1, memory_cost=8, parallelism=1)

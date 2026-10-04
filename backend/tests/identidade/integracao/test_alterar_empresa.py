@@ -16,6 +16,7 @@ from assura.identidade import (
 from tests.identidade.apoio import (
     AUTOR,
     OUTRO_CNPJ_NUMERICO,
+    SOLICITANTE,
     cadastrar_empresa,
     ler_historico_da_empresa,
 )
@@ -34,7 +35,7 @@ def alterar(
     }
     dados.update(alteracoes)
     return AlterarEmpresa(empresas, registrar_acao).executar(
-        autor=AUTOR,
+        solicitante=SOLICITANTE,
         empresa_id=empresa.id,
         razao_social=dados["razao_social"] or "",
         nome_fantasia=dados["nome_fantasia"],
@@ -95,7 +96,9 @@ def test_empresa_desativada_pode_ser_alterada(
     empresas: Empresas, registrar_acao: RegistrarAcao
 ) -> None:
     empresa = cadastrar_empresa(empresas, registrar_acao)
-    DesativarEmpresa(empresas, registrar_acao).executar(autor=AUTOR, empresa_id=empresa.id)
+    DesativarEmpresa(empresas, registrar_acao).executar(
+        solicitante=SOLICITANTE, empresa_id=empresa.id
+    )
     desativada = empresas.obter(empresa.id)
 
     alterar(empresas, registrar_acao, desativada, razao_social="Empresa Y Ltda")
@@ -108,7 +111,7 @@ def test_empresa_desativada_pode_ser_alterada(
 def test_empresa_inexistente_e_recusada(empresas: Empresas, registrar_acao: RegistrarAcao) -> None:
     with pytest.raises(EmpresaNaoEncontrada):
         AlterarEmpresa(empresas, registrar_acao).executar(
-            autor=AUTOR,
+            solicitante=SOLICITANTE,
             empresa_id=uuid4(),
             razao_social="Empresa",
             nome_fantasia=None,
