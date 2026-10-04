@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: assura
+      POSTGRES_PASSWORD: assura
+      POSTGRES_DB: assura
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_dados:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assura"]
+      interval: 5s
+      retries: 10
+
+volumes:
+  postgres_dados:
