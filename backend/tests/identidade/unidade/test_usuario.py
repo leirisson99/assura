@@ -52,3 +52,31 @@ def test_alterar_dados_invalidos_nao_muda_o_usuario() -> None:
 
     assert usuario.nome == "Maria Souza"
     assert usuario.email == EMAIL
+
+
+def test_usuario_cadastrado_nao_tem_senha_nem_e_administrador_do_sistema() -> None:
+    usuario = cadastrar()
+
+    assert not usuario.tem_senha
+    assert not usuario.senha_provisoria
+    assert not usuario.administrador_do_sistema
+
+
+def test_senha_provisoria_fica_marcada_como_provisoria() -> None:
+    usuario = cadastrar()
+
+    usuario.definir_senha_provisoria("resumo-provisorio")
+
+    assert usuario.tem_senha
+    assert usuario.resumo_da_senha == "resumo-provisorio"
+    assert usuario.senha_provisoria
+
+
+def test_senha_definitiva_substitui_a_provisoria() -> None:
+    usuario = cadastrar()
+    usuario.definir_senha_provisoria("resumo-provisorio")
+
+    usuario.definir_senha_definitiva("resumo-definitivo")
+
+    assert usuario.resumo_da_senha == "resumo-definitivo"
+    assert not usuario.senha_provisoria

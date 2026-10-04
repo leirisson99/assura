@@ -45,6 +45,19 @@ class UsuariosSqlAlchemy:
             condicao = condicao & (colunas.id != exceto_usuario_id)
         return bool(self._sessao.scalar(select(exists().where(condicao))))
 
+    def obter_por_email(self, email: Email) -> Usuario | None:
+        linha = (
+            self._sessao.execute(select(tabela_usuario).where(colunas.email == email.valor))
+            .mappings()
+            .one_or_none()
+        )
+        return None if linha is None else converter_em_usuario(linha)
+
+    def existe_administrador_do_sistema(self) -> bool:
+        return bool(
+            self._sessao.scalar(select(exists().where(colunas.administrador_do_sistema.is_(True))))
+        )
+
     def _gravar(self, comando: Executable) -> None:
         executar_traduzindo_restricoes(
             self._sessao,
@@ -58,7 +71,14 @@ class UsuariosSqlAlchemy:
 
 
 def converter_em_colunas(usuario: Usuario) -> dict[str, Any]:
-    return {"nome": usuario.nome, "email": usuario.email.valor, "situacao": str(usuario.situacao)}
+    return {
+        "nome": usuario.nome,
+        "email": usuario.email.valor,
+        "situacao": str(usuario.situacao),
+        "resumo_da_senha": usuario.resumo_da_senha,
+        "senha_provisoria": usuario.senha_provisoria,
+        "administrador_do_sistema": usuario.administrador_do_sistema,
+    }
 
 
 def converter_em_usuario(linha: RowMapping) -> Usuario:
@@ -67,6 +87,9 @@ def converter_em_usuario(linha: RowMapping) -> Usuario:
         nome=linha["nome"],
         email=Email(linha["email"]),
         situacao=SituacaoDoUsuario(linha["situacao"]),
+        resumo_da_senha=linha["resumo_da_senha"],
+        senha_provisoria=linha["senha_provisoria"],
+        administrador_do_sistema=linha["administrador_do_sistema"],
     )
 
 

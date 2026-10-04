@@ -1,5 +1,6 @@
 from sqlalchemy import (
     CHAR,
+    Boolean,
     CheckConstraint,
     Column,
     ForeignKey,
@@ -8,6 +9,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    false,
 )
 
 from assura.compartilhado.infraestrutura.banco import metadados
@@ -37,7 +39,13 @@ tabela_usuario = Table(
     Column("nome", Text, nullable=False),
     Column("email", Text, nullable=False),
     Column("situacao", Text, nullable=False),
+    Column("resumo_da_senha", Text, nullable=True),
+    Column("senha_provisoria", Boolean, nullable=False, server_default=false()),
+    Column("administrador_do_sistema", Boolean, nullable=False, server_default=false()),
     UniqueConstraint("email", name="uq_usuario_email"),
+    CheckConstraint(
+        "NOT senha_provisoria OR resumo_da_senha IS NOT NULL", name="senha_provisoria_tem_resumo"
+    ),
     CheckConstraint("char_length(nome) BETWEEN 1 AND 150", name="nome_tamanho_valido"),
     CheckConstraint("email = lower(email) AND char_length(email) <= 254", name="email_normalizado"),
     CheckConstraint("situacao IN ('ativo')", name="situacao_valida"),

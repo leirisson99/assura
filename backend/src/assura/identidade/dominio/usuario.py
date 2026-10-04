@@ -30,15 +30,33 @@ class Usuario:
     nome: str
     email: Email
     situacao: SituacaoDoUsuario
+    # Resumo argon2id; nenhum enquanto o administrador não define a primeira senha.
+    resumo_da_senha: str | None = None
+    senha_provisoria: bool = False
+    administrador_do_sistema: bool = False
 
     @classmethod
-    def cadastrar(cls, *, nome: str, email: Email) -> Self:
+    def cadastrar(cls, *, nome: str, email: Email, administrador_do_sistema: bool = False) -> Self:
         return cls(
             id=uuid7(),
             nome=validar_nome_de_usuario(nome),
             email=email,
             situacao=SituacaoDoUsuario.ATIVO,
+            administrador_do_sistema=administrador_do_sistema,
         )
+
+    @property
+    def tem_senha(self) -> bool:
+        return self.resumo_da_senha is not None
+
+    def definir_senha_provisoria(self, resumo_da_senha: str) -> None:
+        """Senha definida por um administrador: só permite trocar a senha até o usuário trocá-la."""
+        self.resumo_da_senha = resumo_da_senha
+        self.senha_provisoria = True
+
+    def definir_senha_definitiva(self, resumo_da_senha: str) -> None:
+        self.resumo_da_senha = resumo_da_senha
+        self.senha_provisoria = False
 
     def alterar_dados(self, *, nome: str, email: Email) -> dict[str, AlteracaoDeCampo]:
         """Substitui os dados e devolve só os campos que mudaram, com valor anterior e novo."""

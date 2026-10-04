@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Protocol
 from uuid import UUID
 
@@ -49,6 +50,10 @@ class Usuarios(Protocol):
 
     def existe_email(self, email: Email, exceto_usuario_id: UUID | None = None) -> bool: ...
 
+    def obter_por_email(self, email: Email) -> Usuario | None: ...
+
+    def existe_administrador_do_sistema(self) -> bool: ...
+
 
 @dataclass(frozen=True)
 class UsuarioDaEmpresa:
@@ -76,3 +81,42 @@ class Vinculos(Protocol):
     ) -> list[UsuarioDaEmpresa]:
         """Só os vínculos da empresa pedida, em ordem alfabética do nome do usuário."""
         ...
+
+
+class GeradorDeResumoDeSenha(Protocol):
+    def gerar(self, senha: str) -> str: ...
+
+    def conferir(self, resumo: str, senha: str) -> bool:
+        """Falso para senha errada ou resumo inválido; nunca levanta erro."""
+        ...
+
+
+@dataclass(frozen=True)
+class SessaoEmitida:
+    token: str
+    expira_em: datetime
+
+
+class EmissorDeSessao(Protocol):
+    def emitir(self, usuario_id: UUID) -> SessaoEmitida: ...
+
+    def ler(self, token: str) -> UUID:
+        """Devolve o usuário da sessão ou recusa com SessaoInvalida (vencida, adulterada...)."""
+        ...
+
+
+@dataclass(frozen=True)
+class UsuarioAutenticado:
+    """O que as regras de permissão precisam saber de quem está usando o sistema."""
+
+    id: UUID
+    administrador_do_sistema: bool
+    senha_provisoria: bool
+
+    @classmethod
+    def de(cls, usuario: Usuario) -> UsuarioAutenticado:
+        return cls(
+            id=usuario.id,
+            administrador_do_sistema=usuario.administrador_do_sistema,
+            senha_provisoria=usuario.senha_provisoria,
+        )
