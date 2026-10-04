@@ -3,7 +3,7 @@ from uuid import UUID
 from assura.historico import Autor, RegistrarAcao, TipoDeAcao
 from assura.identidade.aplicacao.historico_do_usuario import registrar_acao_sobre_vinculo
 from assura.identidade.aplicacao.mudar_situacao_do_vinculo import (
-    exigir_que_nao_seja_o_ultimo_administrador,
+    exigir_que_a_empresa_mantenha_administrador,
 )
 from assura.identidade.aplicacao.permissoes import Permissoes
 from assura.identidade.aplicacao.portas import UsuarioAutenticado, Vinculos
@@ -43,7 +43,7 @@ class RemoverAdministrador:
     def executar(self, *, solicitante: UsuarioAutenticado, vinculo_id: UUID) -> Vinculo:
         vinculo = self._vinculos.obter(vinculo_id)
         self._permissoes.exigir_administrador_da_empresa(solicitante, vinculo.empresa_id)
-        exigir_que_nao_seja_o_ultimo_administrador(self._vinculos, vinculo)
+        exigir_que_a_empresa_mantenha_administrador(self._vinculos, vinculo.empresa_id, vinculo.id)
         vinculo.remover_administrador()
         self._vinculos.atualizar(vinculo)
         registrar_acao_sobre_vinculo(

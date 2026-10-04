@@ -5,14 +5,18 @@ from uuid import UUID, uuid7
 
 from assura.identidade.dominio.email import Email
 from assura.identidade.dominio.empresa import AlteracaoDeCampo
-from assura.identidade.dominio.erros import NomeDeUsuarioInvalido
+from assura.identidade.dominio.erros import (
+    NomeDeUsuarioInvalido,
+    UsuarioJaAtivo,
+    UsuarioJaDesativado,
+)
 
 TAMANHO_MAXIMO_DE_NOME_DE_USUARIO = 150
 
 
 class SituacaoDoUsuario(StrEnum):
-    # A desativação de usuário chega na etapa 1.6.
     ATIVO = "ativo"
+    DESATIVADO = "desativado"
 
 
 def validar_nome_de_usuario(nome: str) -> str:
@@ -48,6 +52,21 @@ class Usuario:
     @property
     def tem_senha(self) -> bool:
         return self.resumo_da_senha is not None
+
+    @property
+    def esta_ativo(self) -> bool:
+        return self.situacao is SituacaoDoUsuario.ATIVO
+
+    def desativar(self) -> None:
+        """Corta o acesso a todas as empresas; dados, senha e vínculos ficam como estão."""
+        if self.situacao is SituacaoDoUsuario.DESATIVADO:
+            raise UsuarioJaDesativado(f"o usuário {self.id} já está desativado")
+        self.situacao = SituacaoDoUsuario.DESATIVADO
+
+    def reativar(self) -> None:
+        if self.situacao is SituacaoDoUsuario.ATIVO:
+            raise UsuarioJaAtivo(f"o usuário {self.id} já está ativo")
+        self.situacao = SituacaoDoUsuario.ATIVO
 
     def definir_senha_provisoria(self, resumo_da_senha: str) -> None:
         """Senha definida por um administrador: só permite trocar a senha até o usuário trocá-la."""

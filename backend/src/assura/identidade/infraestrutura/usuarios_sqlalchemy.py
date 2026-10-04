@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Executable, RowMapping, exists, insert, select, update
+from sqlalchemy import Executable, RowMapping, exists, func, insert, select, update
 from sqlalchemy.orm import Session
 
 from assura.compartilhado.infraestrutura.banco import executar_traduzindo_restricoes
@@ -57,6 +57,13 @@ class UsuariosSqlAlchemy:
         return bool(
             self._sessao.scalar(select(exists().where(colunas.administrador_do_sistema.is_(True))))
         )
+
+    def contar_administradores_do_sistema_ativos(self) -> int:
+        consulta = select(func.count()).where(
+            colunas.administrador_do_sistema.is_(True)
+            & (colunas.situacao == str(SituacaoDoUsuario.ATIVO))
+        )
+        return self._sessao.scalar(consulta) or 0
 
     def _gravar(self, comando: Executable) -> None:
         executar_traduzindo_restricoes(

@@ -195,3 +195,64 @@ def test_membro_comum_nem_administrador_de_outra_empresa_tornam_administrador(
     for solicitante in (como(membro), como(administrador_de_outra)):
         with pytest.raises(PermissaoNegada):
             tornar(alvo, solicitante)
+
+
+def desativar_usuario_do_vinculo(usuarios: Usuarios, vinculo: Vinculo) -> None:
+    """Desativa direto pelo domínio: aqui interessa só a contagem de administradores."""
+    usuario = usuarios.obter(vinculo.usuario_id)
+    usuario.desativar()
+    usuarios.atualizar(usuario)
+
+
+def test_administrador_com_usuario_desativado_nao_conta_ao_retirar_papel(
+    empresa_id: UUID,
+    vincular_pessoa: VincularPessoa,
+    tornar: Callable[..., Vinculo],
+    remover: Callable[..., Vinculo],
+    usuarios: Usuarios,
+) -> None:
+    desativado = tornar(vincular_pessoa(empresa_id, "ana@empresa.com"))
+    ativo = tornar(vincular_pessoa(empresa_id, "bia@empresa.com"))
+    desativar_usuario_do_vinculo(usuarios, desativado)
+
+    with pytest.raises(UltimoAdministradorNaoPodeSerRemovido):
+        remover(ativo)
+
+
+def test_administrador_com_usuario_desativado_nao_conta_ao_desativar_vinculo(
+    empresa_id: UUID,
+    vincular_pessoa: VincularPessoa,
+    tornar: Callable[..., Vinculo],
+    usuarios: Usuarios,
+    vinculos: Vinculos,
+    permissoes: Permissoes,
+    registrar_acao: RegistrarAcao,
+) -> None:
+    desativado = tornar(vincular_pessoa(empresa_id, "ana@empresa.com"))
+    ativo = tornar(vincular_pessoa(empresa_id, "bia@empresa.com"))
+    desativar_usuario_do_vinculo(usuarios, desativado)
+
+    with pytest.raises(UltimoAdministradorNaoPodeSerRemovido):
+        DesativarVinculo(vinculos, permissoes, registrar_acao).executar(
+            solicitante=SOLICITANTE, vinculo_id=ativo.id
+        )
+
+
+def test_vinculo_de_administrador_com_usuario_desativado_pode_ser_desativado(
+    empresa_id: UUID,
+    vincular_pessoa: VincularPessoa,
+    tornar: Callable[..., Vinculo],
+    usuarios: Usuarios,
+    vinculos: Vinculos,
+    permissoes: Permissoes,
+    registrar_acao: RegistrarAcao,
+) -> None:
+    desativado = tornar(vincular_pessoa(empresa_id, "ana@empresa.com"))
+    tornar(vincular_pessoa(empresa_id, "bia@empresa.com"))
+    desativar_usuario_do_vinculo(usuarios, desativado)
+
+    vinculo = DesativarVinculo(vinculos, permissoes, registrar_acao).executar(
+        solicitante=SOLICITANTE, vinculo_id=desativado.id
+    )
+
+    assert not vinculo.e_administrador_ativo

@@ -54,6 +54,8 @@ class Usuarios(Protocol):
 
     def existe_administrador_do_sistema(self) -> bool: ...
 
+    def contar_administradores_do_sistema_ativos(self) -> int: ...
+
 
 @dataclass(frozen=True)
 class UsuarioDaEmpresa:
@@ -80,9 +82,12 @@ class Vinculos(Protocol):
 
     def listar_ativos_do_usuario(self, usuario_id: UUID) -> list[Vinculo]: ...
 
-    def contar_administradores_ativos(self, empresa_id: UUID) -> int:
-        """Bloqueia os vínculos administradores ativos da empresa até o fim da transação, para
-        que duas remoções simultâneas não deixem a empresa sem administrador."""
+    def listar_administradores_ativos(self, empresa_id: UUID) -> list[UUID]:
+        """Ids dos vínculos administradores ativos da empresa cujo usuário também está ativo.
+
+        Bloqueia esses vínculos e os usuários deles até o fim da transação, para que ações
+        simultâneas (retirar papel, desativar vínculo, desativar usuário) não deixem a empresa sem
+        administrador."""
         ...
 
     def listar_da_empresa(
