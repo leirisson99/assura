@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from assura.identidade.aplicacao.alterar_usuario import AlterarUsuario
 from assura.identidade.aplicacao.consultar_usuarios import ConsultarUsuarios
+from assura.identidade.aplicacao.mudar_situacao_do_usuario import DesativarUsuario, ReativarUsuario
 from assura.identidade.aplicacao.redefinir_senha import RedefinirSenha
 from assura.identidade.infraestrutura.dependencias_http import (
     GeradorDeResumo,
@@ -66,3 +67,29 @@ def redefinir_a_senha(
         solicitante=solicitante, usuario_id=usuario_id, senha_provisoria=dados.senha_provisoria
     )
     repositorios.sessao.commit()
+
+
+@roteador_de_usuarios.post("/{usuario_id}/desativacao")
+def desativar_usuario(
+    usuario_id: UUID, solicitante: Solicitante, repositorios: RepositoriosDaRequisicao
+) -> UsuarioResposta:
+    usuario = DesativarUsuario(
+        repositorios.usuarios,
+        repositorios.vinculos,
+        repositorios.empresas,
+        repositorios.permissoes,
+        repositorios.registrar_acao,
+    ).executar(solicitante=solicitante, usuario_id=usuario_id)
+    repositorios.sessao.commit()
+    return UsuarioResposta.de(usuario)
+
+
+@roteador_de_usuarios.post("/{usuario_id}/reativacao")
+def reativar_usuario(
+    usuario_id: UUID, solicitante: Solicitante, repositorios: RepositoriosDaRequisicao
+) -> UsuarioResposta:
+    usuario = ReativarUsuario(
+        repositorios.usuarios, repositorios.permissoes, repositorios.registrar_acao
+    ).executar(solicitante=solicitante, usuario_id=usuario_id)
+    repositorios.sessao.commit()
+    return UsuarioResposta.de(usuario)

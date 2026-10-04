@@ -8,6 +8,7 @@ from assura.identidade import (
     Empresas,
     IncluirUsuarioNaEmpresa,
     PermissaoNegada,
+    SituacaoDoUsuario,
     SituacaoDoVinculo,
     UsuarioAutenticado,
     UsuarioDaEmpresa,
@@ -118,3 +119,21 @@ def test_administrador_da_empresa_inclui_so_na_propria(
         incluir.executar(
             solicitante=como_ana, empresa_id=outra_empresa_id, nome="Bia", email="bia@x.com"
         )
+
+
+def test_usuario_desativado_incluido_na_empresa_continua_desativado(
+    usuarios: Usuarios,
+    registrar_acao: RegistrarAcao,
+    incluir: IncluirUsuarioNaEmpresa,
+    empresa_id: UUID,
+) -> None:
+    usuario = cadastrar_usuario(usuarios, registrar_acao, email="maria@empresa.com")
+    usuario.desativar()
+    usuarios.atualizar(usuario)
+
+    incluido = incluir.executar(
+        solicitante=SOLICITANTE, empresa_id=empresa_id, nome="Maria", email="maria@empresa.com"
+    )
+
+    assert incluido.vinculo.situacao is SituacaoDoVinculo.ATIVO
+    assert usuarios.obter(usuario.id).situacao is SituacaoDoUsuario.DESATIVADO

@@ -49,7 +49,7 @@ tabela_usuario = Table(
     ),
     CheckConstraint("char_length(nome) BETWEEN 1 AND 150", name="nome_tamanho_valido"),
     CheckConstraint("email = lower(email) AND char_length(email) <= 254", name="email_normalizado"),
-    CheckConstraint("situacao IN ('ativo')", name="situacao_valida"),
+    CheckConstraint("situacao IN ('ativo', 'desativado')", name="situacao_valida"),
 )
 
 tabela_vinculo = Table(

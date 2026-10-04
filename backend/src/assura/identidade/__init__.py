@@ -17,6 +17,7 @@ from assura.identidade.aplicacao.consultar_usuarios import ConsultarUsuarios
 from assura.identidade.aplicacao.criar_root import CriarRoot
 from assura.identidade.aplicacao.incluir_usuario_na_empresa import IncluirUsuarioNaEmpresa
 from assura.identidade.aplicacao.mudar_situacao_da_empresa import DesativarEmpresa, ReativarEmpresa
+from assura.identidade.aplicacao.mudar_situacao_do_usuario import DesativarUsuario, ReativarUsuario
 from assura.identidade.aplicacao.mudar_situacao_do_vinculo import DesativarVinculo, ReativarVinculo
 from assura.identidade.aplicacao.permissoes import Permissoes
 from assura.identidade.aplicacao.portas import (
@@ -52,7 +53,10 @@ from assura.identidade.dominio.erros import (
     SenhaInvalida,
     SenhaProvisoriaPrecisaSerTrocada,
     SessaoInvalida,
+    UltimoAdministradorDoSistemaNaoPodeSerDesativado,
     UltimoAdministradorNaoPodeSerRemovido,
+    UsuarioJaAtivo,
+    UsuarioJaDesativado,
     UsuarioNaoEncontrado,
     VinculoDesativadoNaoPodeSerAdministrador,
     VinculoJaAtivo,
@@ -99,6 +103,7 @@ __all__ = [
     "ConsultarEmpresas",
     "ConsultarUsuarios",
     "DesativarEmpresa",
+    "DesativarUsuario",
     "DesativarVinculo",
     "Email",
     "EmailInvalido",
@@ -114,13 +119,17 @@ __all__ = [
     "NomeFantasiaInvalido",
     "RazaoSocialInvalida",
     "ReativarEmpresa",
+    "ReativarUsuario",
     "ReativarVinculo",
     "SituacaoDaEmpresa",
     "SituacaoDoUsuario",
     "SituacaoDoVinculo",
     "Usuario",
     "UsuarioDaEmpresa",
+    "UsuarioJaAtivo",
+    "UsuarioJaDesativado",
     "UsuarioNaoEncontrado",
+    "UltimoAdministradorDoSistemaNaoPodeSerDesativado",
     "Usuarios",
     "VincularUsuario",
     "Vinculo",

@@ -6,6 +6,8 @@ from sqlalchemy.orm import Session
 
 from assura.historico import Autor, RegistrarAcao
 from assura.identidade import (
+    Autenticar,
+    CredenciaisInvalidas,
     PermissaoNegada,
     RedefinirSenha,
     SenhaInvalida,
@@ -16,8 +18,9 @@ from assura.identidade import (
     Vinculos,
 )
 from assura.identidade.aplicacao.permissoes import Permissoes
-from assura.identidade.aplicacao.portas import GeradorDeResumoDeSenha
+from assura.identidade.aplicacao.portas import EmissorDeSessao, GeradorDeResumoDeSenha
 from tests.identidade.apoio import (
+    EMAIL,
     OUTRA_SENHA,
     OUTRO_EMAIL,
     SENHA,
@@ -196,4 +199,26 @@ def test_administrador_da_empresa_nao_redefine_senha_de_administrador_do_sistema
     with pytest.raises(PermissaoNegada):
         RedefinirSenha(usuarios, permissoes, gerador_de_resumo, registrar_acao).executar(
             solicitante=administrador, usuario_id=root.id, senha_provisoria=OUTRA_SENHA
+        )
+
+
+def test_redefinir_senha_de_usuario_desativado_nao_devolve_o_acesso(
+    permissoes: Permissoes,
+    usuarios: Usuarios,
+    registrar_acao: RegistrarAcao,
+    gerador_de_resumo: GeradorDeResumoDeSenha,
+    emissor_de_sessao: EmissorDeSessao,
+    administrador: UsuarioAutenticado,
+) -> None:
+    usuario = criar_usuario_com_senha(usuarios, registrar_acao, gerador_de_resumo)
+    usuario.desativar()
+    usuarios.atualizar(usuario)
+
+    RedefinirSenha(usuarios, permissoes, gerador_de_resumo, registrar_acao).executar(
+        solicitante=administrador, usuario_id=usuario.id, senha_provisoria=OUTRA_SENHA
+    )
+
+    with pytest.raises(CredenciaisInvalidas):
+        Autenticar(usuarios, gerador_de_resumo, emissor_de_sessao).executar(
+            email=EMAIL, senha=OUTRA_SENHA
         )

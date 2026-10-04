@@ -75,3 +75,17 @@ def test_falhas_de_login_dao_sempre_o_mesmo_erro(
 
     with pytest.raises(CredenciaisInvalidas, match="e-mail ou senha incorretos"):
         autenticar(usuarios, gerador_de_resumo, emissor_de_sessao, email, senha)
+
+
+def test_usuario_desativado_com_senha_certa_recebe_o_mesmo_erro(
+    usuarios: Usuarios,
+    registrar_acao: RegistrarAcao,
+    gerador_de_resumo: GeradorDeResumoDeSenha,
+    emissor_de_sessao: EmissorDeSessao,
+) -> None:
+    usuario = criar_usuario_com_senha(usuarios, registrar_acao, gerador_de_resumo)
+    usuario.desativar()
+    usuarios.atualizar(usuario)
+
+    with pytest.raises(CredenciaisInvalidas, match="e-mail ou senha incorretos"):
+        autenticar(usuarios, gerador_de_resumo, emissor_de_sessao, EMAIL, SENHA)

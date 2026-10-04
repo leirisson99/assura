@@ -7,6 +7,7 @@ from assura.compartilhado.dominio.pagina import Pagina
 from assura.compartilhado.infraestrutura.banco import executar_traduzindo_restricoes
 from assura.identidade.aplicacao.portas import UsuarioDaEmpresa, Vinculos
 from assura.identidade.dominio.erros import VinculoJaExiste, VinculoNaoEncontrado
+from assura.identidade.dominio.usuario import SituacaoDoUsuario
 from assura.identidade.dominio.vinculo import SituacaoDoVinculo, Vinculo
 from assura.identidade.infraestrutura.tabela import tabela_usuario, tabela_vinculo
 from assura.identidade.infraestrutura.usuarios_sqlalchemy import converter_em_usuario
@@ -78,17 +79,22 @@ class VinculosSqlAlchemy:
         )
         return [converter_em_vinculo(linha) for linha in self._sessao.execute(consulta).mappings()]
 
-    def contar_administradores_ativos(self, empresa_id: UUID) -> int:
+    def listar_administradores_ativos(self, empresa_id: UUID) -> list[UUID]:
+        # FOR UPDATE sem OF bloqueia também a linha do usuário. Quem desativa um usuário altera só
+        # essa linha; com ela bloqueada, a transação que espera relê o usuário já desativado.
         consulta = (
             select(colunas.id)
+            .join(tabela_usuario, colunas.usuario_id == tabela_usuario.c.id)
             .where(
                 (colunas.empresa_id == empresa_id)
                 & colunas.administrador_da_empresa.is_(True)
                 & (colunas.situacao == str(SituacaoDoVinculo.ATIVO))
+                & (tabela_usuario.c.situacao == str(SituacaoDoUsuario.ATIVO))
             )
+            .order_by(colunas.id)
             .with_for_update()
         )
-        return len(self._sessao.execute(consulta).all())
+        return list(self._sessao.scalars(consulta))
 
     def listar_da_empresa(
         self, empresa_id: UUID, situacao: SituacaoDoVinculo | None, pagina: Pagina

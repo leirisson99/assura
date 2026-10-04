@@ -108,3 +108,15 @@ class VinculoNaoEAdministrador(ErroDeIdentidade):
 
 class UltimoAdministradorNaoPodeSerRemovido(ErroDeIdentidade):
     pass
+
+
+class UsuarioJaDesativado(ErroDeIdentidade):
+    pass
+
+
+class UsuarioJaAtivo(ErroDeIdentidade):
+    pass
+
+
+class UltimoAdministradorDoSistemaNaoPodeSerDesativado(ErroDeIdentidade):
+    pass

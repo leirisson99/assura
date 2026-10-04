@@ -34,6 +34,8 @@ class TipoDeAcao(StrEnum):
     SENHA_REDEFINIDA = "senha_redefinida"
     ADMINISTRADOR_DEFINIDO = "administrador_definido"
     ADMINISTRADOR_REMOVIDO = "administrador_removido"
+    USUARIO_DESATIVADO = "usuario_desativado"
+    USUARIO_REATIVADO = "usuario_reativado"
 
 
 class TipoDeAutor(StrEnum):

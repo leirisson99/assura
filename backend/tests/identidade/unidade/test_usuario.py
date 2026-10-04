@@ -1,7 +1,11 @@
 import pytest
 
 from assura.identidade.dominio.email import Email
-from assura.identidade.dominio.erros import NomeDeUsuarioInvalido
+from assura.identidade.dominio.erros import (
+    NomeDeUsuarioInvalido,
+    UsuarioJaAtivo,
+    UsuarioJaDesativado,
+)
 from assura.identidade.dominio.usuario import (
     TAMANHO_MAXIMO_DE_NOME_DE_USUARIO,
     SituacaoDoUsuario,
@@ -80,3 +84,50 @@ def test_senha_definitiva_substitui_a_provisoria() -> None:
 
     assert usuario.resumo_da_senha == "resumo-definitivo"
     assert not usuario.senha_provisoria
+
+
+def test_desativar_usuario_ativo_o_deixa_desativado() -> None:
+    usuario = cadastrar()
+
+    usuario.desativar()
+
+    assert usuario.situacao is SituacaoDoUsuario.DESATIVADO
+    assert not usuario.esta_ativo
+
+
+def test_desativar_usuario_ja_desativado_e_recusado() -> None:
+    usuario = cadastrar()
+    usuario.desativar()
+
+    with pytest.raises(UsuarioJaDesativado):
+        usuario.desativar()
+
+
+def test_reativar_usuario_desativado_o_deixa_ativo() -> None:
+    usuario = cadastrar()
+    usuario.desativar()
+
+    usuario.reativar()
+
+    assert usuario.situacao is SituacaoDoUsuario.ATIVO
+    assert usuario.esta_ativo
+
+
+def test_reativar_usuario_ja_ativo_e_recusado() -> None:
+    usuario = cadastrar()
+
+    with pytest.raises(UsuarioJaAtivo):
+        usuario.reativar()
+
+
+def test_desativar_nao_muda_dados_senha_nem_administrador_do_sistema() -> None:
+    usuario = Usuario.cadastrar(nome="Root", email=EMAIL, administrador_do_sistema=True)
+    usuario.definir_senha_definitiva("resumo-definitivo")
+
+    usuario.desativar()
+
+    assert usuario.nome == "Root"
+    assert usuario.email == EMAIL
+    assert usuario.resumo_da_senha == "resumo-definitivo"
+    assert not usuario.senha_provisoria
+    assert usuario.administrador_do_sistema
