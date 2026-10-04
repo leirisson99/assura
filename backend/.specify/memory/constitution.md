@@ -2,188 +2,195 @@
 
 Plataforma de gestão e auditoria de SGI que reduz o trabalho operacional do auditor.
 
-Este documento define os princípios que toda especificação, plano e tarefa do Assura deve
-respeitar. Em caso de conflito entre uma especificação e esta constituição, a constituição
-prevalece.
+Este documento define os princípios que toda especificação, plano e tarefa do Assura deve respeitar. Em caso de conflito entre uma especificação e esta constituição, a constituição prevalece.
 
-## Princípios
+## 1. Produto
+
+- **Para quem:** empresas que mantêm um sistema de gestão integrado (qualidade, meio ambiente, segurança do trabalho) e seus auditores internos.
+- **Problema:** o relatório de uma auditoria leva de 4 a 5 dias para ser montado depois da visita.
+- **Resultado esperado:** relatório aprovado em até um dia.
+- **Métrica principal:** tempo entre o fim da auditoria e o relatório aprovado, medido desde a Fase 1.
+- **Posicionamento:** plataforma de gestão e auditoria de SGI. A IA é um meio de reduzir trabalho operacional, não o produto.
+
+## 2. Princípios
 
 ### I. O sistema funciona sem IA
 
-- O Assura é construído primeiro como um sistema completo sem IA. Todo fluxo (montar
-  checklist, executar auditoria, gerar relatório, acompanhar ações) funciona de ponta a ponta
-  com entrada manual.
-- A IA entra depois, como uma camada que acelera etapas que já existem. Ela nunca é o único
-  caminho para concluir uma tarefa.
-- Se um serviço de IA estiver indisponível, o auditor continua trabalhando pelo caminho manual.
-- O relatório da V1 é gerado por modelo de documento preenchido com os dados registrados, sem
-  geração de texto por IA.
+- O Assura é construído primeiro como um sistema completo sem IA. Todo fluxo fecha de ponta a ponta com entrada manual.
+- A IA entra depois, como camada que acelera etapas que já existem. Ela nunca é o único caminho para concluir uma tarefa.
+- Se um serviço de IA estiver indisponível, o usuário continua trabalhando pelo caminho manual.
 
 ### II. O auditor decide
 
 - Nenhuma conclusão de auditoria é gravada como definitiva sem confirmação de uma pessoa.
-- Quando a IA for adicionada, ela sugere e o auditor confirma, corrige ou descarta. A IA nunca
-  declara uma não conformidade.
-- O sistema guarda quem decidiu cada situação e quando.
+- A IA sugere; o auditor confirma, corrige ou descarta. A IA nunca declara uma não conformidade, apenas sinaliza "possível divergência".
+- O sistema guarda quem decidiu cada situação e quando, separado do que foi sugerido.
 
-### III. Rastreabilidade e imutabilidade
+### III. Rastreabilidade de ponta a ponta
 
-- Toda ação relevante gera um registro de histórico (quem, o quê, quando) em tabela só de
-  inserção.
-- Nada é excluído fisicamente: usuários, itens do banco e vínculos são desativados.
-- Relatório aprovado não é alterado. Correção gera nova versão.
-- O checklist de uma auditoria é uma cópia dos itens do banco. Mudanças posteriores no banco
-  não alteram auditorias existentes.
+- Todo achado é rastreável pela cadeia: requisito → processo → documento → item verificado → resposta → evidência.
+- Requisito é entidade própria, ligada a processos e a documentos. Não é texto livre.
+- Toda resposta tem ao menos uma evidência ou a declaração explícita de que não houve.
+- Evidência tem tipo: documento, foto, registro, entrevista, indicador ou sistema.
+- A resposta registra quem foi entrevistado e em qual setor.
 
-### IV. Isolamento por empresa
+### IV. Histórico e imutabilidade
+
+- Toda ação relevante gera um registro de histórico (quem, o quê, quando) em tabela só de inserção.
+- Nada é excluído fisicamente: usuários, itens, requisitos e vínculos são desativados.
+- Relatório aprovado e versão de documento aprovada não são alterados. Correção gera nova versão.
+- O checklist de uma auditoria é uma cópia dos itens do banco. Mudanças posteriores no banco não alteram auditorias existentes.
+
+### V. Isolamento por empresa
 
 - Toda tabela de negócio carrega `empresa_id`, e toda consulta filtra por ele.
 - Nenhum endpoint devolve dados de uma empresa a um usuário sem vínculo ativo com ela.
+- O `empresa_id` vem sempre da sessão do usuário, nunca de um valor informado pelo cliente ou por um modelo de IA.
 - O isolamento é coberto por testes automatizados; uma falha nesses testes bloqueia a entrega.
 
-### V. Papéis fixos e simples
+### VI. Papéis fixos e simples
 
 - Usuário é identidade. Setor, cargo e permissões ficam no vínculo com a empresa.
-- Papéis existentes: administrador do sistema, administrador da empresa; por projeto, responsável,
-  membro e leitor; por auditoria avulsa, responsável; e, por auditoria, auditor líder e auditor.
+- Papéis: administrador do sistema, administrador da empresa; por projeto, responsável, membro e leitor; por auditoria avulsa, responsável; e, por auditoria, auditor líder e auditor.
 - Cargo não é papel: cargo serve para atribuir trabalho, papel define o que a pessoa pode fazer.
-- Toda empresa tem ao menos um administrador, todo projeto e toda auditoria avulsa têm ao menos um
-  responsável, e toda auditoria iniciada tem ao menos um auditor líder. O sistema impede a remoção
-  do último.
+- Toda empresa tem ao menos um administrador, todo projeto e toda auditoria avulsa têm ao menos um responsável, e toda auditoria iniciada tem ao menos um auditor líder. O sistema impede a remoção do último.
+- Um projeto pode ter vários responsáveis, e a titularidade pode ser transferida.
+- A auditoria é realizada por uma equipe auditora com um ou mais auditores líderes. Ela pode ser criada sem equipe, mas só pode ser iniciada com ao menos um auditor líder.
+- O auditor líder pode realizar todas as ações da auditoria, inclusive aprovar o relatório. Os demais auditores executam os itens do checklist.
+- A auditoria pode pertencer a um projeto ou ser avulsa, sem vínculo com projeto. Na auditoria avulsa, o responsável tem o papel equivalente ao responsável do projeto.
 - Permissões configuráveis não entram enquanto os papéis fixos atenderem.
 
-### VI. O campo vem primeiro
+### VII. O campo vem primeiro
 
-- A execução da auditoria é pensada para celular, com poucos toques por item: situação por
-  botão, evidência em texto curto, foto opcional.
-- Rede instável é condição normal. Nenhuma resposta registrada pode ser perdida por falta de
-  sinal.
-- Telas administrativas (cadastros, banco de itens, relatório) são web.
+- A execução da auditoria é pensada para celular, com poucos toques por item: situação por botão, evidência em texto curto, foto opcional.
+- Rede instável é condição normal. Nenhuma resposta registrada pode ser perdida por falta de sinal.
+- Nada que o auditor faz em campo espera por processamento em segundo plano.
+- Telas administrativas (cadastros, banco de itens, documentos, relatório) são web.
 
-### VII. Escopo por fases
+### VIII. Escopo guiado por evidência
 
-- **Fase 1 (sem IA):** empresa, usuários e papéis; banco de itens; montagem do checklist por
-  filtro; execução no celular; relatório gerado por modelo; ações com responsável e prazo.
-- **Fase 2 (IA na execução):** resposta por voz, transcrição e estruturação da fala, rascunho
-  de relatório redigido por IA.
-- **Fase 3 (IA sobre documentos):** cadastro de documentos, busca neles e análise de
-  divergência contra procedimentos.
-- Controle de documentos completo, tratativa completa de não conformidade e regulatórios só
-  entram com evidência de necessidade vinda de auditores ou clientes.
-- Toda funcionalidade é classificada como P0, P1 ou P2 antes de ser especificada. Só P0 entra
-  em uma primeira entrega.
-- A métrica de sucesso é o tempo entre o fim da auditoria e o relatório aprovado, medida desde
-  a Fase 1.
-
-### VIII. Preparado para a IA, sem construí-la antes da hora
-
-- O modelo de dados da Fase 1 já separa a situação decidida pelo auditor de uma futura situação
-  sugerida, e já prevê anexos por resposta. Isso evita migrações dolorosas na Fase 2.
-- Nenhum código de IA, fila de processamento ou integração com provedor é escrito na Fase 1.
-- Quando a IA entrar: transcrição e estruturação ficam em etapas separadas, cada provedor atrás
-  de uma interface, toda saída validada contra um esquema, e a concordância entre sugestão e
-  decisão do auditor é medida.
+- Uma funcionalidade só é especificada com evidência de necessidade vinda de auditores ou clientes.
+- Toda funcionalidade é classificada como P0, P1 ou P2 antes de ser especificada. Só P0 entra em uma primeira entrega.
+- O cadastro inicial de uma empresa (processos, requisitos, itens) precisa ser viável em horas, não em dias. Importação por planilha é P0.
 
 ### IX. Privacidade e LGPD
 
-- Evidências, fotos e, futuramente, áudios podem conter dados pessoais e são tratados como tal.
-- O acesso às evidências é restrito a quem participa da auditoria e aos administradores da
-  empresa.
-- Dados de uma empresa nunca são usados como contexto para outra empresa.
-- A gravação de áudio, quando existir, exige ciência das pessoas gravadas e prazo de retenção
-  definido.
+- Evidências, fotos, nomes de entrevistados e, futuramente, áudios são dados pessoais e são tratados como tal.
+- O acesso às evidências é restrito a quem participa da auditoria e aos administradores da empresa.
+- Dados de uma empresa nunca são usados como contexto para outra empresa nem para treinar modelos.
+- A gravação de áudio, quando existir, exige ciência das pessoas gravadas e prazo de retenção definido por empresa.
+- Do texto das normas guarda-se apenas o número da cláusula e um título próprio. O conteúdo das normas é protegido por direito autoral e não é reproduzido.
 
 ### X. Simplicidade
 
-- Uma única aplicação, organizada em módulos. Serviços separados só com justificativa
-  registrada.
-- Não se constrói para um requisito futuro hipotético, com a exceção explícita do Princípio
-  VIII.
+- Uma única aplicação, organizada em módulos. Serviços separados só com justificativa registrada.
+- Não se constrói para um requisito futuro hipotético. A única exceção são as reservas no modelo de dados listadas na seção 5.
 - Entre duas soluções que atendem ao requisito, escolhe-se a que tem menos partes.
 
-## Padrões de engenharia
+## 3. Fases
 
-### Domínio (DDD)
+| Fase | Conteúdo | IA |
+|---|---|---|
+| 1 | Identidade e acesso; requisitos, processos e banco de itens; auditoria no celular; relatório por modelo de documento; ações com responsável e prazo | Nenhuma |
+| 2 | Resposta por voz; transcrição; estruturação da fala; redação da não conformidade; rascunho do relatório | Etapas fixas |
+| 3 | Análise de divergência contra procedimentos; perguntas sobre documentos; investigação de causa; sugestão de ações e de itens; padrões entre auditorias | Agentes |
 
-- O código é organizado por contexto de negócio, não por tipo técnico. Contextos iniciais:
-  identidade e acesso, banco de itens, auditoria, ações, documentos.
-- Cada contexto tem três camadas: domínio (entidades e regras), aplicação (casos de uso) e
-  infraestrutura (banco, armazenamento, HTTP).
-- A camada de domínio não importa FastAPI, SQLAlchemy nem qualquer biblioteca de
-  infraestrutura. Regras de negócio são testáveis sem banco e sem servidor.
-- Regras que nunca podem ser violadas ficam na entidade que as protege (ex.: a auditoria impede
-  alteração depois do relatório aprovado; o projeto impede a remoção do último responsável).
-- Um contexto só acessa outro pela interface pública dele, nunca pelas tabelas.
-- Existe um glossário único de termos do domínio. O mesmo termo é usado na conversa com os
-  auditores, na interface e no código.
-- Padrões táticos (agregados, objetos de valor, eventos de domínio) entram quando resolvem um
-  problema concreto, não por padrão. Cadastros simples podem ser simples.
+- A gestão de documentos é pré-requisito da Fase 3. Sua posição em relação à Fase 1 está em "Decisões em aberto".
+- Tratativa completa de não conformidade e regulatórios não têm fase definida e dependem do Princípio VIII.
 
-### Testes primeiro (TDD)
-
-- Regra de negócio nasce de um teste que falha: escrever o teste, ver falhar, implementar o
-  mínimo, refatorar.
-- Testes de domínio são unitários e rodam sem banco. Casos de uso têm testes de integração com
-  banco real.
-- O nome do teste descreve o comportamento esperado (ex.:
-  `test_auditoria_com_relatorio_aprovado_nao_aceita_nova_resposta`).
-- Correção de defeito começa por um teste que o reproduz.
-- Código sem regra de negócio (configuração, mapeamento simples) não exige teste escrito antes.
-
-### Código limpo
-
-- Nomes de funções e variáveis descrevem o que fazem ou o que guardam. Função começa com verbo
-  (`aprovar_versao_documento`), booleano responde a uma pergunta (`relatorio_esta_aprovado`).
-- Sem abreviações, siglas internas ou nomes genéricos (`data`, `info`, `tmp`, `x`, `processar`,
-  `handle`), exceto siglas do próprio domínio.
-- Uma função faz uma coisa. Se o nome precisa de "e", ela é dividida.
-- Comentário explica o porquê de uma decisão; o que o código faz deve estar claro pelos nomes.
-- Sem números ou textos soltos com significado de negócio: viram constantes ou enumerações
-  nomeadas.
-- Erros de negócio são exceções com nome do domínio (`UltimoResponsavelNaoPodeSerRemovido`),
-  não códigos nem mensagens genéricas.
-- Formatação e análise estática são automáticas e obrigatórias antes de cada entrega.
-
-## Padrões de qualidade
-
-- Regras de permissão, isolamento por empresa e imutabilidade têm testes automatizados
-  obrigatórios.
-- Toda migração de banco é versionada e reversível.
-- Termos do domínio seguem o vocabulário dos auditores, validado com eles, na interface e no
-  código.
-
-## Stack
+## 4. Stack
 
 - Frontend: Next.js (telas web e execução em campo como aplicativo web responsivo).
 - Backend: Python com FastAPI.
 - Banco de dados: PostgreSQL.
+- Arquivos: armazenamento de objetos, com link temporário para acesso. O banco guarda apenas os dados do arquivo.
 - IA (a partir da Fase 2): Strands Agents sobre Amazon Bedrock.
 
-## Decisões em aberto
+## 5. Arquitetura de IA
 
-- Classificação dos achados (termos e níveis usados pelos auditores).
-- Formato do relatório (modelo real usado pelos auditores).
+Vale a partir da Fase 2. Nenhum código de IA, fila de processamento ou integração com provedor é escrito na Fase 1.
+
+### Reservas no modelo de dados da Fase 1
+
+- A resposta tem a situação decidida pelo auditor e um campo separado, vazio, para a situação sugerida.
+- A evidência tem tipo, o que permite acrescentar áudio na Fase 2 sem migração estrutural.
+
+### Três formas de usar IA
+
+1. **Sem IA.** Alertas de prazo, acompanhamento de ações e indicadores são código comum.
+2. **Etapa fixa.** Chamada direta ao modelo, com entrada e saída definidas por esquema. Usada para transcrição, estruturação da fala, redação da não conformidade e rascunho do relatório.
+3. **Agente.** Usado somente quando a tarefa exige decidir quais dados consultar.
+
+Sempre se escolhe a forma mais simples que resolve.
+
+### Agentes
+
+São três, um por fase do trabalho do auditor. Criar outro exige alteração desta constituição.
+
+| Agente | Quando atua | O que faz | Ferramentas |
+|---|---|---|---|
+| Planejamento | Ao criar a auditoria (web) | Sugere itens do checklist, aponta pontos de atenção e riscos, propõe o plano | Banco de itens, requisitos, histórico, ações, documentos |
+| Execução | A cada item respondido (celular) | Compara a resposta com o procedimento, responde perguntas sobre documentos, avisa quando falta evidência | Documentos vigentes, auditoria em andamento |
+| Pós-auditoria | Após o encerramento (web) | Conduz a investigação de causa pelo método dos 5 porquês, sugere ações corretivas, aponta padrões entre auditorias | Auditoria concluída, histórico, ações |
+
+### Regras
+
+- **Sem agente coordenador.** A tela em que o usuário está determina qual agente é chamado. Essa escolha é código comum.
+- **Ferramentas somente de leitura.** Nenhum agente grava, altera ou exclui dados.
+- **Ferramentas filtradas por empresa,** conforme o Princípio V.
+- **Citação obrigatória.** Toda afirmação baseada em documento traz documento, seção e trecho. Sem fonte, o agente diz que não encontrou.
+- **Saída validada.** Toda saída estruturada é validada contra um esquema antes de ser usada. Saída inválida vira erro tratado, não dado.
+- **Provedor atrás de interface.** A lógica de negócio não chama Strands nem Bedrock diretamente.
+- **Medição.** A concordância entre a sugestão da IA e a decisão do auditor é registrada desde a primeira etapa de IA.
+- **Ordem de construção:** etapas fixas na Fase 2; na Fase 3, agente de execução, depois pós-auditoria, depois planejamento.
+
+## 6. Padrões de engenharia
+
+### Domínio (DDD)
+
+- O código é organizado por contexto de negócio: identidade e acesso, requisitos e banco de itens, auditoria, ações, documentos.
+- Cada contexto tem três camadas: domínio (entidades e regras), aplicação (casos de uso) e infraestrutura (banco, armazenamento, HTTP).
+- A camada de domínio não importa FastAPI, SQLAlchemy nem qualquer biblioteca de infraestrutura.
+- Regras que nunca podem ser violadas ficam na entidade que as protege.
+- Um contexto só acessa outro pela interface pública dele, nunca pelas tabelas.
+- Existe um glossário único de termos do domínio, validado com os auditores. O mesmo termo é usado na conversa, na interface e no código.
+- Padrões táticos (agregados, objetos de valor, eventos de domínio) entram quando resolvem um problema concreto. Cadastros simples podem ser simples.
+
+### Testes primeiro (TDD)
+
+- Regra de negócio nasce de um teste que falha: escrever o teste, ver falhar, implementar o mínimo, refatorar.
+- Testes de domínio são unitários e rodam sem banco. Casos de uso têm testes de integração com banco real.
+- O nome do teste descreve o comportamento esperado (ex.: `test_ultimo_responsavel_nao_pode_ser_removido`).
+- Correção de defeito começa por um teste que o reproduz.
+- Permissões, isolamento por empresa e imutabilidade têm testes obrigatórios.
+- Código sem regra de negócio (configuração, mapeamento simples) não exige teste escrito antes.
+
+### Código limpo
+
+- Nomes de funções e variáveis descrevem o que fazem ou o que guardam. Função começa com verbo (`aprovar_versao_documento`), booleano responde a uma pergunta (`relatorio_esta_aprovado`).
+- Sem abreviações nem nomes genéricos (`data`, `info`, `tmp`, `processar`, `handle`), exceto siglas do próprio domínio.
+- Uma função faz uma coisa. Se o nome precisa de "e", ela é dividida.
+- Comentário explica o porquê de uma decisão; o que o código faz deve estar claro pelos nomes.
+- Valores com significado de negócio viram constantes ou enumerações nomeadas.
+- Erros de negócio são exceções com nome do domínio (`UltimoResponsavelNaoPodeSerRemovido`).
+- Formatação e análise estática são automáticas e obrigatórias antes de cada entrega.
+- Toda migração de banco é versionada e reversível.
+
+## 7. Decisões em aberto
+
+- Idioma do código (os exemplos deste documento assumem português).
+- Posição da gestão de documentos: antes, junto ou depois da auditoria na Fase 1.
+- Classificação dos achados: termos e níveis usados pelos auditores.
+- Formato do relatório: modelo real usado pelos auditores.
 - Edição vigente da ISO 19011 e normas cobertas (ISO 9001, 14001, 45001).
-- Provedores de transcrição e de modelo de linguagem (somente na Fase 2).
+- Escopo da tratativa de não conformidade e do módulo de regulatórios.
+- Provedores de transcrição e modelo de linguagem (somente na Fase 2).
 
-## Decisões tomadas
-
-- **2026-10-04:** a auditoria é realizada por uma equipe auditora, não por um único auditor. A
-  auditoria pode ser criada sem equipe, mas só pode ser iniciada com ao menos um auditor líder;
-  depois de iniciada, o sistema impede a remoção do último. O auditor líder pode realizar todas as
-  ações da auditoria, inclusive aprovar o relatório; os demais auditores executam os itens do
-  checklist.
-- **2026-10-04:** a auditoria pode ser realizada dentro de um projeto ou de forma avulsa, sem
-  vínculo com projeto. A auditoria avulsa tem ao menos um responsável, papel equivalente ao
-  responsável do projeto, e só pode ser iniciada depois de vinculada a ao menos um auditor líder.
-
-## Governança
+## 8. Governança
 
 - Esta constituição prevalece sobre especificações, planos e tarefas.
-- Toda especificação declara como atende aos princípios aplicáveis. Exceções são registradas
-  com motivo e prazo de revisão.
-- Alterações exigem acordo dos três sócios e atualização da versão: mudança de princípio
-  incrementa a versão principal; acréscimo incrementa a secundária; ajuste de redação
-  incrementa a de correção.
+- Toda especificação declara como atende aos princípios aplicáveis. Exceções são registradas com motivo e prazo de revisão.
+- Uma decisão em aberto, quando fechada, sai da seção 7 e entra na seção correspondente.
+- Alterações exigem acordo dos três sócios e atualização da versão: mudança de princípio incrementa a versão principal; acréscimo incrementa a secundária; ajuste de redação incrementa a de correção.
 
-**Versão**: 1.0.0 (rascunho) | **Ratificada**: TODO(RATIFICATION_DATE): pendente de ratificação pelos três sócios | **Última alteração**: 2026-10-04
+**Versão:** 2.0.0 (rascunho, ainda não ratificada pelos sócios) | **Última alteração:** 2026-10-04
