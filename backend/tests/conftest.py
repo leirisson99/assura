@@ -1,14 +1,17 @@
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from pathlib import Path
+from uuid import UUID, uuid7
 
 import pytest
 from alembic import command
 from alembic.config import Config
-from sqlalchemy import Engine, create_engine, text
+from sqlalchemy import Engine, create_engine, insert, text
 from sqlalchemy.engine import URL, make_url
 from sqlalchemy.orm import Session
 
 from assura.configuracao import configuracao
+from assura.identidade.infraestrutura.tabela import tabela_empresa
+from tests.apoio import gerar_cnpj_valido
 
 CAMINHO_DO_ALEMBIC_INI = Path(__file__).resolve().parent.parent / "alembic.ini"
 
@@ -64,3 +67,22 @@ def sessao(motor_de_teste: Engine) -> Iterator[Session]:
         yield sessao_de_teste
         sessao_de_teste.close()
         transacao.rollback()
+
+
+@pytest.fixture
+def criar_empresa(sessao: Session) -> Callable[[], UUID]:
+    """Grava uma empresa direto na tabela, sem registro de histórico, e devolve o id."""
+
+    def criar() -> UUID:
+        empresa_id = uuid7()
+        sessao.execute(
+            insert(tabela_empresa).values(
+                id=empresa_id,
+                razao_social=f"Empresa {empresa_id}",
+                cnpj=gerar_cnpj_valido(),
+                situacao="ativa",
+            )
+        )
+        return empresa_id
+
+    return criar

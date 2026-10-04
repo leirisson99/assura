@@ -19,9 +19,5 @@ class PeriodoInvalido(ErroDoHistorico):
     pass
 
 
-class PaginaInvalida(ErroDoHistorico):
-    pass
-
-
 class ConsultaAOutraEmpresaNaoPermitida(ErroDoHistorico):
     pass

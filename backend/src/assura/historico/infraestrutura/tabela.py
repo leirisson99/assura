@@ -1,4 +1,14 @@
-from sqlalchemy import CheckConstraint, Column, DateTime, Index, Table, Text, Uuid, text
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Index,
+    Table,
+    Text,
+    Uuid,
+    text,
+)
 from sqlalchemy.dialects.postgresql import JSONB
 
 from assura.compartilhado.infraestrutura.banco import metadados
@@ -12,8 +22,8 @@ tabela_registro_de_historico = Table(
     Column("tipo_de_acao", Text, nullable=False),
     Column("objeto_tipo", Text, nullable=False),
     Column("objeto_id", Text, nullable=False),
-    # Sem chave estrangeira por enquanto: a tabela de empresas chega na funcionalidade 1.2.
-    Column("empresa_id", Uuid, nullable=True),
+    # Empresas nunca são excluídas; RESTRICT só protege contra exclusão acidental.
+    Column("empresa_id", Uuid, ForeignKey("empresa.id", ondelete="RESTRICT"), nullable=True),
     Column("registrado_em", DateTime(timezone=True), nullable=False),
     Column("detalhes", JSONB, nullable=False, server_default=text("'{}'::jsonb")),
     CheckConstraint("autor_tipo IN ('usuario', 'sistema')", name="autor_tipo_valido"),

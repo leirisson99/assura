@@ -1,5 +1,6 @@
+from collections.abc import Callable
 from datetime import UTC, datetime
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 from sqlalchemy import func, select, text
@@ -10,10 +11,10 @@ from assura.historico import (
     Autor,
     ObjetoAfetado,
     RegistrarAcao,
+    TipoDeAcao,
     criar_historico,
 )
 from assura.historico.infraestrutura.tabela import tabela_registro_de_historico
-from tests.historico.tipos_de_teste import TipoDeAcaoDeTeste
 
 INSTANTE = datetime(2026, 10, 4, 12, 0, tzinfo=UTC)
 OBJETO_DE_EXEMPLO = ObjetoAfetado(tipo="exemplo", identificador="1")
@@ -43,13 +44,15 @@ def contar_acoes_de_exemplo(sessao: Session) -> int:
     return sessao.scalar(text("SELECT count(*) FROM acao_de_exemplo")) or 0
 
 
-def test_acao_registrada_fica_gravada_com_todos_os_dados(sessao: Session) -> None:
-    empresa_id = uuid4()
+def test_acao_registrada_fica_gravada_com_todos_os_dados(
+    sessao: Session, criar_empresa: Callable[[], UUID]
+) -> None:
+    empresa_id = criar_empresa()
     usuario_id = uuid4()
 
     criar_registrar_acao(sessao).executar(
         autor=Autor.usuario(usuario_id),
-        tipo_de_acao=TipoDeAcaoDeTeste.ACAO_DE_EXEMPLO,
+        tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
         objeto=OBJETO_DE_EXEMPLO,
         empresa_id=empresa_id,
         detalhes={"nome": "Empresa X", "ativa": True},
@@ -58,7 +61,7 @@ def test_acao_registrada_fica_gravada_com_todos_os_dados(sessao: Session) -> Non
     linha = sessao.execute(select(tabela_registro_de_historico)).mappings().one()
     assert linha["autor_tipo"] == "usuario"
     assert linha["autor_usuario_id"] == usuario_id
-    assert linha["tipo_de_acao"] == "acao_de_exemplo"
+    assert linha["tipo_de_acao"] == "empresa_cadastrada"
     assert linha["objeto_tipo"] == "exemplo"
     assert linha["objeto_id"] == "1"
     assert linha["empresa_id"] == empresa_id
@@ -69,7 +72,7 @@ def test_acao_registrada_fica_gravada_com_todos_os_dados(sessao: Session) -> Non
 def test_acao_fora_de_empresa_fica_gravada_sem_empresa(sessao: Session) -> None:
     criar_registrar_acao(sessao).executar(
         autor=Autor.sistema(),
-        tipo_de_acao=TipoDeAcaoDeTeste.ACAO_DE_EXEMPLO,
+        tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
         objeto=OBJETO_DE_EXEMPLO,
         empresa_id=None,
     )
@@ -88,7 +91,7 @@ def test_falha_da_acao_depois_do_registro_desfaz_a_acao_e_o_registro(sessao: Ses
         gravar_acao_de_exemplo(sessao)
         criar_registrar_acao(sessao).executar(
             autor=Autor.sistema(),
-            tipo_de_acao=TipoDeAcaoDeTeste.ACAO_DE_EXEMPLO,
+            tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
             objeto=OBJETO_DE_EXEMPLO,
             empresa_id=None,
         )
@@ -103,7 +106,7 @@ def test_falha_ao_gravar_o_registro_desfaz_a_acao_de_negocio(sessao: Session) ->
     historico = criar_historico(sessao)
     registro_ja_gravado = RegistrarAcao(historico, relogio=lambda: INSTANTE).executar(
         autor=Autor.sistema(),
-        tipo_de_acao=TipoDeAcaoDeTeste.ACAO_DE_EXEMPLO,
+        tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
         objeto=OBJETO_DE_EXEMPLO,
         empresa_id=None,
     )
@@ -121,10 +124,22 @@ def test_registrar_acao_nao_confirma_a_transacao_de_quem_chama(sessao: Session) 
     sessao.begin_nested()
     criar_registrar_acao(sessao).executar(
         autor=Autor.sistema(),
-        tipo_de_acao=TipoDeAcaoDeTeste.ACAO_DE_EXEMPLO,
+        tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
         objeto=OBJETO_DE_EXEMPLO,
         empresa_id=None,
     )
     sessao.rollback()
+
+    assert contar_registros(sessao) == 0
+
+
+def test_registro_com_empresa_inexistente_e_recusado(sessao: Session) -> None:
+    with pytest.raises(IntegrityError), sessao.begin_nested():
+        criar_registrar_acao(sessao).executar(
+            autor=Autor.sistema(),
+            tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
+            objeto=OBJETO_DE_EXEMPLO,
+            empresa_id=uuid4(),
+        )
 
     assert contar_registros(sessao) == 0

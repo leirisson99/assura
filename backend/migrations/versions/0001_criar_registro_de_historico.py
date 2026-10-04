@@ -38,11 +38,11 @@ def upgrade() -> None:
         ),
         sa.CheckConstraint(
             "autor_tipo IN ('usuario', 'sistema')",
-            name="ck_registro_de_historico_autor_tipo_valido",
+            name=op.f("ck_registro_de_historico_autor_tipo_valido"),
         ),
         sa.CheckConstraint(
             "(autor_tipo = 'usuario') = (autor_usuario_id IS NOT NULL)",
-            name="ck_registro_de_historico_autor_usuario_coerente",
+            name=op.f("ck_registro_de_historico_autor_usuario_coerente"),
         ),
         sa.PrimaryKeyConstraint("id", name="pk_registro_de_historico"),
     )

@@ -3,16 +3,15 @@ from uuid import uuid4
 
 import pytest
 
-from assura.historico.dominio.consulta import (
+from assura.compartilhado.dominio.pagina import (
     TAMANHO_DE_PAGINA_MAXIMO,
     TAMANHO_DE_PAGINA_PADRAO,
-    FiltroDoHistorico,
     Pagina,
-    SolicitanteDaConsulta,
+    PaginaInvalida,
 )
+from assura.historico.dominio.consulta import FiltroDoHistorico, SolicitanteDaConsulta
 from assura.historico.dominio.erros import (
     ConsultaAOutraEmpresaNaoPermitida,
-    PaginaInvalida,
     PeriodoInvalido,
 )
 

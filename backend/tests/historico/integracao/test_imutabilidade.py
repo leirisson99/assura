@@ -5,10 +5,9 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.orm import Session
 
-from assura.historico import Autor, ObjetoAfetado, RegistrarAcao, criar_historico
+from assura.historico import Autor, ObjetoAfetado, RegistrarAcao, TipoDeAcao, criar_historico
 from assura.historico.infraestrutura.historico_sqlalchemy import HistoricoDeAcoesSqlAlchemy
 from assura.historico.infraestrutura.tabela import tabela_registro_de_historico
-from tests.historico.tipos_de_teste import TipoDeAcaoDeTeste
 
 MENSAGEM_DE_HISTORICO_IMUTAVEL = "o histórico de ações não pode ser alterado nem excluído"
 
@@ -24,7 +23,7 @@ def gravar_registro(sessao: Session) -> None:
         criar_historico(sessao), relogio=lambda: datetime(2026, 10, 4, tzinfo=UTC)
     ).executar(
         autor=Autor.sistema(),
-        tipo_de_acao=TipoDeAcaoDeTeste.ACAO_DE_EXEMPLO,
+        tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
         objeto=ObjetoAfetado(tipo="exemplo", identificador="original"),
         empresa_id=None,
     )

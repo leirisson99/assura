@@ -13,9 +13,9 @@ from assura.historico.dominio.registro_de_historico import (
     Autor,
     ObjetoAfetado,
     RegistroDeHistorico,
+    TipoDeAcao,
     TipoDeAutor,
 )
-from tests.historico.tipos_de_teste import TipoDeAcaoDeTeste
 
 INSTANTE = datetime(2026, 10, 4, 12, 0, tzinfo=UTC)
 
@@ -23,7 +23,7 @@ INSTANTE = datetime(2026, 10, 4, 12, 0, tzinfo=UTC)
 def criar_registro(**alteracoes: Any) -> RegistroDeHistorico:
     argumentos: dict[str, Any] = {
         "autor": Autor.sistema(),
-        "tipo_de_acao": TipoDeAcaoDeTeste.ACAO_DE_EXEMPLO,
+        "tipo_de_acao": TipoDeAcao.EMPRESA_CADASTRADA,
         "objeto": ObjetoAfetado(tipo="exemplo", identificador="1"),
         "empresa_id": None,
         "registrado_em": INSTANTE,
@@ -77,7 +77,7 @@ def test_registro_guarda_todos_os_dados_da_acao() -> None:
     registro = criar_registro(autor=autor, empresa_id=empresa_id, detalhes={"nome": "Empresa X"})
 
     assert registro.autor == autor
-    assert registro.tipo_de_acao == "acao_de_exemplo"
+    assert registro.tipo_de_acao == "empresa_cadastrada"
     assert registro.objeto == ObjetoAfetado(tipo="exemplo", identificador="1")
     assert registro.empresa_id == empresa_id
     assert registro.registrado_em == INSTANTE
