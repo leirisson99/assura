@@ -27,6 +27,7 @@ class VinculosSqlAlchemy:
                 usuario_id=vinculo.usuario_id,
                 empresa_id=vinculo.empresa_id,
                 situacao=str(vinculo.situacao),
+                administrador_da_empresa=vinculo.administrador_da_empresa,
             ),
             {
                 RESTRICAO_DE_VINCULO_UNICO: lambda: VinculoJaExiste(
@@ -39,7 +40,10 @@ class VinculosSqlAlchemy:
         self._sessao.execute(
             update(tabela_vinculo)
             .where(colunas.id == vinculo.id)
-            .values(situacao=str(vinculo.situacao))
+            .values(
+                situacao=str(vinculo.situacao),
+                administrador_da_empresa=vinculo.administrador_da_empresa,
+            )
         )
 
     def obter(self, vinculo_id: UUID) -> Vinculo:
@@ -56,6 +60,36 @@ class VinculosSqlAlchemy:
         condicao = (colunas.usuario_id == usuario_id) & (colunas.empresa_id == empresa_id)
         return bool(self._sessao.scalar(select(exists().where(condicao))))
 
+    def obter_do_usuario_na_empresa(self, usuario_id: UUID, empresa_id: UUID) -> Vinculo | None:
+        linha = (
+            self._sessao.execute(
+                select(tabela_vinculo).where(
+                    (colunas.usuario_id == usuario_id) & (colunas.empresa_id == empresa_id)
+                )
+            )
+            .mappings()
+            .one_or_none()
+        )
+        return None if linha is None else converter_em_vinculo(linha)
+
+    def listar_ativos_do_usuario(self, usuario_id: UUID) -> list[Vinculo]:
+        consulta = select(tabela_vinculo).where(
+            (colunas.usuario_id == usuario_id) & (colunas.situacao == str(SituacaoDoVinculo.ATIVO))
+        )
+        return [converter_em_vinculo(linha) for linha in self._sessao.execute(consulta).mappings()]
+
+    def contar_administradores_ativos(self, empresa_id: UUID) -> int:
+        consulta = (
+            select(colunas.id)
+            .where(
+                (colunas.empresa_id == empresa_id)
+                & colunas.administrador_da_empresa.is_(True)
+                & (colunas.situacao == str(SituacaoDoVinculo.ATIVO))
+            )
+            .with_for_update()
+        )
+        return len(self._sessao.execute(consulta).all())
+
     def listar_da_empresa(
         self, empresa_id: UUID, situacao: SituacaoDoVinculo | None, pagina: Pagina
     ) -> list[UsuarioDaEmpresa]:
@@ -65,6 +99,7 @@ class VinculosSqlAlchemy:
                 colunas.id.label("vinculo_id"),
                 colunas.empresa_id,
                 colunas.situacao.label("vinculo_situacao"),
+                colunas.administrador_da_empresa,
             )
             .join(tabela_vinculo, colunas.usuario_id == tabela_usuario.c.id)
             .where(colunas.empresa_id == empresa_id)
@@ -84,6 +119,7 @@ class VinculosSqlAlchemy:
                     usuario_id=linha["id"],
                     empresa_id=linha["empresa_id"],
                     situacao=SituacaoDoVinculo(linha["vinculo_situacao"]),
+                    administrador_da_empresa=linha["administrador_da_empresa"],
                 ),
             )
             for linha in self._sessao.execute(consulta).mappings()
@@ -96,6 +132,7 @@ def converter_em_vinculo(linha: RowMapping) -> Vinculo:
         usuario_id=linha["usuario_id"],
         empresa_id=linha["empresa_id"],
         situacao=SituacaoDoVinculo(linha["situacao"]),
+        administrador_da_empresa=linha["administrador_da_empresa"],
     )
 
 

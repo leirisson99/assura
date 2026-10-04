@@ -2,7 +2,8 @@ from uuid import UUID
 
 from assura.historico import Autor, RegistrarAcao, TipoDeAcao
 from assura.identidade.aplicacao.historico_do_usuario import registrar_acao_sobre_vinculo
-from assura.identidade.aplicacao.portas import Empresas, Usuarios, Vinculos
+from assura.identidade.aplicacao.permissoes import exigir_administrador_do_sistema
+from assura.identidade.aplicacao.portas import Empresas, UsuarioAutenticado, Usuarios, Vinculos
 from assura.identidade.dominio.empresa import SituacaoDaEmpresa
 from assura.identidade.dominio.erros import EmpresaDesativadaNaoAceitaVinculo, VinculoJaExiste
 from assura.identidade.dominio.vinculo import Vinculo
@@ -21,7 +22,10 @@ class VincularUsuario:
         self._vinculos = vinculos
         self._registrar_acao = registrar_acao
 
-    def executar(self, *, autor: Autor, usuario_id: UUID, empresa_id: UUID) -> Vinculo:
+    def executar(
+        self, *, solicitante: UsuarioAutenticado, usuario_id: UUID, empresa_id: UUID
+    ) -> Vinculo:
+        exigir_administrador_do_sistema(solicitante)
         usuario = self._usuarios.obter(usuario_id)
         empresa = self._empresas.obter(empresa_id)
         if empresa.situacao is SituacaoDaEmpresa.DESATIVADA:
@@ -34,7 +38,7 @@ class VincularUsuario:
         self._vinculos.adicionar(vinculo)
         registrar_acao_sobre_vinculo(
             self._registrar_acao,
-            autor=autor,
+            autor=Autor.usuario(solicitante.id),
             tipo_de_acao=TipoDeAcao.USUARIO_VINCULADO,
             vinculo=vinculo,
         )

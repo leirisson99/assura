@@ -10,6 +10,7 @@ from sqlalchemy import (
     UniqueConstraint,
     Uuid,
     false,
+    text,
 )
 
 from assura.compartilhado.infraestrutura.banco import metadados
@@ -58,8 +59,14 @@ tabela_vinculo = Table(
     Column("usuario_id", Uuid, ForeignKey("usuario.id", ondelete="RESTRICT"), nullable=False),
     Column("empresa_id", Uuid, ForeignKey("empresa.id", ondelete="RESTRICT"), nullable=False),
     Column("situacao", Text, nullable=False),
+    Column("administrador_da_empresa", Boolean, nullable=False, server_default=false()),
     UniqueConstraint("usuario_id", "empresa_id", name="uq_vinculo_usuario_empresa"),
     CheckConstraint("situacao IN ('ativo', 'desativado')", name="situacao_valida"),
 )
 
 Index("ix_vinculo_empresa_id", tabela_vinculo.c.empresa_id)
+Index(
+    "ix_vinculo_administradores_ativos",
+    tabela_vinculo.c.empresa_id,
+    postgresql_where=text("administrador_da_empresa AND situacao = 'ativo'"),
+)

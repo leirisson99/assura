@@ -3,6 +3,10 @@
 Outros contextos usam apenas o que é exportado aqui, nunca as tabelas diretamente.
 """
 
+from assura.identidade.aplicacao.administrador_da_empresa import (
+    RemoverAdministrador,
+    TornarAdministrador,
+)
 from assura.identidade.aplicacao.alterar_empresa import AlterarEmpresa
 from assura.identidade.aplicacao.alterar_usuario import AlterarUsuario
 from assura.identidade.aplicacao.autenticar import Autenticar
@@ -11,8 +15,10 @@ from assura.identidade.aplicacao.cadastrar_usuario import CadastrarUsuario
 from assura.identidade.aplicacao.consultar_empresas import ConsultarEmpresas
 from assura.identidade.aplicacao.consultar_usuarios import ConsultarUsuarios
 from assura.identidade.aplicacao.criar_root import CriarRoot
+from assura.identidade.aplicacao.incluir_usuario_na_empresa import IncluirUsuarioNaEmpresa
 from assura.identidade.aplicacao.mudar_situacao_da_empresa import DesativarEmpresa, ReativarEmpresa
 from assura.identidade.aplicacao.mudar_situacao_do_vinculo import DesativarVinculo, ReativarVinculo
+from assura.identidade.aplicacao.permissoes import Permissoes
 from assura.identidade.aplicacao.portas import (
     Empresas,
     UsuarioAutenticado,
@@ -46,10 +52,14 @@ from assura.identidade.dominio.erros import (
     SenhaInvalida,
     SenhaProvisoriaPrecisaSerTrocada,
     SessaoInvalida,
+    UltimoAdministradorNaoPodeSerRemovido,
     UsuarioNaoEncontrado,
+    VinculoDesativadoNaoPodeSerAdministrador,
     VinculoJaAtivo,
     VinculoJaDesativado,
+    VinculoJaEAdministrador,
     VinculoJaExiste,
+    VinculoNaoEAdministrador,
     VinculoNaoEncontrado,
 )
 from assura.identidade.dominio.usuario import SituacaoDoUsuario, Usuario
@@ -59,6 +69,14 @@ from assura.identidade.infraestrutura.usuarios_sqlalchemy import criar_usuarios
 from assura.identidade.infraestrutura.vinculos_sqlalchemy import criar_vinculos
 
 __all__ = [
+    "RemoverAdministrador",
+    "TornarAdministrador",
+    "IncluirUsuarioNaEmpresa",
+    "Permissoes",
+    "UltimoAdministradorNaoPodeSerRemovido",
+    "VinculoDesativadoNaoPodeSerAdministrador",
+    "VinculoJaEAdministrador",
+    "VinculoNaoEAdministrador",
     "Autenticar",
     "CriarRoot",
     "UsuarioAutenticado",

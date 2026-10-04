@@ -1,6 +1,7 @@
 from assura.historico import Autor, RegistrarAcao, TipoDeAcao
 from assura.identidade.aplicacao.historico_da_empresa import registrar_acao_sobre_empresa
-from assura.identidade.aplicacao.portas import Empresas
+from assura.identidade.aplicacao.permissoes import exigir_administrador_do_sistema
+from assura.identidade.aplicacao.portas import Empresas, UsuarioAutenticado
 from assura.identidade.dominio.cnpj import Cnpj
 from assura.identidade.dominio.empresa import Empresa
 from assura.identidade.dominio.erros import CnpjJaCadastrado
@@ -14,8 +15,14 @@ class CadastrarEmpresa:
         self._registrar_acao = registrar_acao
 
     def executar(
-        self, *, autor: Autor, razao_social: str, nome_fantasia: str | None, cnpj: str
+        self,
+        *,
+        solicitante: UsuarioAutenticado,
+        razao_social: str,
+        nome_fantasia: str | None,
+        cnpj: str,
     ) -> Empresa:
+        exigir_administrador_do_sistema(solicitante)
         empresa = Empresa.cadastrar(
             razao_social=razao_social, nome_fantasia=nome_fantasia, cnpj=Cnpj.criar(cnpj)
         )
@@ -24,7 +31,7 @@ class CadastrarEmpresa:
         self._empresas.adicionar(empresa)
         registrar_acao_sobre_empresa(
             self._registrar_acao,
-            autor=autor,
+            autor=Autor.usuario(solicitante.id),
             tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
             empresa_id=empresa.id,
             detalhes={

@@ -21,11 +21,19 @@ from assura.identidade import (
     Usuario,
     Usuarios,
 )
-from assura.identidade.aplicacao.portas import GeradorDeResumoDeSenha
-from tests.apoio import AUTOR_DE_TESTE
+from assura.identidade.aplicacao.portas import GeradorDeResumoDeSenha, UsuarioAutenticado
+from tests.apoio import AUTOR_DE_TESTE, ID_DO_AUTOR_DE_TESTE
 
 INSTANTE = datetime(2026, 10, 4, 12, 0, tzinfo=UTC)
 AUTOR = AUTOR_DE_TESTE
+# Os casos de uso confiam no solicitante montado pela camada HTTP; nos testes, o autor de teste age
+# como administrador do sistema.
+SOLICITANTE = UsuarioAutenticado(
+    id=ID_DO_AUTOR_DE_TESTE, administrador_do_sistema=True, senha_provisoria=False
+)
+SOLICITANTE_COMUM = UsuarioAutenticado(
+    id=ID_DO_AUTOR_DE_TESTE, administrador_do_sistema=False, senha_provisoria=False
+)
 CNPJ_NUMERICO = "12.345.678/0001-95"
 OUTRO_CNPJ_NUMERICO = "11.222.333/0001-81"
 CNPJ_ALFANUMERICO = "12.ABC.345/01DE-35"
@@ -43,7 +51,7 @@ def cadastrar_empresa(
     cnpj: str = CNPJ_NUMERICO,
 ) -> Empresa:
     return CadastrarEmpresa(empresas, registrar_acao).executar(
-        autor=AUTOR, razao_social=razao_social, nome_fantasia=nome_fantasia, cnpj=cnpj
+        solicitante=SOLICITANTE, razao_social=razao_social, nome_fantasia=nome_fantasia, cnpj=cnpj
     )
 
 
@@ -68,7 +76,9 @@ def cadastrar_usuario(
     nome: str = "Maria Souza",
     email: str = EMAIL,
 ) -> Usuario:
-    return CadastrarUsuario(usuarios, registrar_acao).executar(autor=AUTOR, nome=nome, email=email)
+    return CadastrarUsuario(usuarios, registrar_acao).executar(
+        solicitante=SOLICITANTE, nome=nome, email=email
+    )
 
 
 def ler_historico_do_objeto(

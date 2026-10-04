@@ -11,9 +11,9 @@ from assura.identidade import (
     Usuarios,
 )
 from tests.identidade.apoio import (
-    AUTOR,
     EMAIL,
     OUTRO_EMAIL,
+    SOLICITANTE,
     cadastrar_usuario,
     ler_historico_do_objeto,
 )
@@ -25,7 +25,7 @@ def test_alteracao_fica_gravada_e_historico_tem_so_o_que_mudou(
     usuario = cadastrar_usuario(usuarios, registrar_acao)
 
     AlterarUsuario(usuarios, registrar_acao).executar(
-        autor=AUTOR, usuario_id=usuario.id, nome="Maria S. Souza", email=EMAIL
+        solicitante=SOLICITANTE, usuario_id=usuario.id, nome="Maria S. Souza", email=EMAIL
     )
 
     assert usuarios.obter(usuario.id).nome == "Maria S. Souza"
@@ -43,7 +43,7 @@ def test_email_de_outro_usuario_e_recusado_e_usuario_continua_igual(
 
     with pytest.raises(EmailJaCadastrado):
         AlterarUsuario(usuarios, registrar_acao).executar(
-            autor=AUTOR, usuario_id=usuario.id, nome="Nova", email=OUTRO_EMAIL.upper()
+            solicitante=SOLICITANTE, usuario_id=usuario.id, nome="Nova", email=OUTRO_EMAIL.upper()
         )
 
     assert usuarios.obter(usuario.id).email.valor == EMAIL
@@ -56,7 +56,7 @@ def test_alteracao_sem_mudanca_nao_gera_registro(
     usuario = cadastrar_usuario(usuarios, registrar_acao)
 
     AlterarUsuario(usuarios, registrar_acao).executar(
-        autor=AUTOR, usuario_id=usuario.id, nome=" Maria Souza ", email=EMAIL.upper()
+        solicitante=SOLICITANTE, usuario_id=usuario.id, nome=" Maria Souza ", email=EMAIL.upper()
     )
 
     assert len(ler_historico_do_objeto(sessao, "usuario", usuario.id)) == 1
@@ -65,5 +65,5 @@ def test_alteracao_sem_mudanca_nao_gera_registro(
 def test_usuario_inexistente_e_recusado(usuarios: Usuarios, registrar_acao: RegistrarAcao) -> None:
     with pytest.raises(UsuarioNaoEncontrado):
         AlterarUsuario(usuarios, registrar_acao).executar(
-            autor=AUTOR, usuario_id=uuid4(), nome="Maria", email=EMAIL
+            solicitante=SOLICITANTE, usuario_id=uuid4(), nome="Maria", email=EMAIL
         )

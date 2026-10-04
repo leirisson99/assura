@@ -18,9 +18,10 @@ from assura.identidade import (
     VinculoNaoEncontrado,
     Vinculos,
 )
+from assura.identidade.aplicacao.permissoes import Permissoes
 from tests.apoio import gerar_cnpj_valido
 from tests.identidade.apoio import (
-    AUTOR,
+    SOLICITANTE,
     cadastrar_empresa,
     cadastrar_usuario,
     ler_historico_do_objeto,
@@ -36,7 +37,7 @@ def vinculos_do_usuario(
     vincular = VincularUsuario(usuarios, empresas, vinculos, registrar_acao)
     vinculo_a, vinculo_b = (
         vincular.executar(
-            autor=AUTOR,
+            solicitante=SOLICITANTE,
             usuario_id=usuario.id,
             empresa_id=cadastrar_empresa(empresas, registrar_acao, cnpj=gerar_cnpj_valido()).id,
         )
@@ -46,6 +47,7 @@ def vinculos_do_usuario(
 
 
 def test_desativar_vinculo_nao_afeta_o_usuario_nem_o_outro_vinculo(
+    permissoes: Permissoes,
     sessao: Session,
     usuarios: Usuarios,
     vinculos: Vinculos,
@@ -54,7 +56,9 @@ def test_desativar_vinculo_nao_afeta_o_usuario_nem_o_outro_vinculo(
 ) -> None:
     vinculo_a, vinculo_b = vinculos_do_usuario
 
-    DesativarVinculo(vinculos, registrar_acao).executar(autor=AUTOR, vinculo_id=vinculo_a.id)
+    DesativarVinculo(vinculos, permissoes, registrar_acao).executar(
+        solicitante=SOLICITANTE, vinculo_id=vinculo_a.id
+    )
 
     assert vinculos.obter(vinculo_a.id).situacao is SituacaoDoVinculo.DESATIVADO
     assert vinculos.obter(vinculo_b.id).situacao is SituacaoDoVinculo.ATIVO
@@ -66,15 +70,20 @@ def test_desativar_vinculo_nao_afeta_o_usuario_nem_o_outro_vinculo(
 
 
 def test_reativar_vinculo_grava_a_situacao_e_o_historico(
+    permissoes: Permissoes,
     sessao: Session,
     vinculos: Vinculos,
     registrar_acao: RegistrarAcao,
     vinculos_do_usuario: tuple[Vinculo, Vinculo],
 ) -> None:
     vinculo, _ = vinculos_do_usuario
-    DesativarVinculo(vinculos, registrar_acao).executar(autor=AUTOR, vinculo_id=vinculo.id)
+    DesativarVinculo(vinculos, permissoes, registrar_acao).executar(
+        solicitante=SOLICITANTE, vinculo_id=vinculo.id
+    )
 
-    ReativarVinculo(vinculos, registrar_acao).executar(autor=AUTOR, vinculo_id=vinculo.id)
+    ReativarVinculo(vinculos, permissoes, registrar_acao).executar(
+        solicitante=SOLICITANTE, vinculo_id=vinculo.id
+    )
 
     assert vinculos.obter(vinculo.id).situacao is SituacaoDoVinculo.ATIVO
     tipos = [
@@ -84,22 +93,24 @@ def test_reativar_vinculo_grava_a_situacao_e_o_historico(
 
 
 def test_desativar_de_novo_e_recusado_sem_registro(
+    permissoes: Permissoes,
     sessao: Session,
     vinculos: Vinculos,
     registrar_acao: RegistrarAcao,
     vinculos_do_usuario: tuple[Vinculo, Vinculo],
 ) -> None:
     vinculo, _ = vinculos_do_usuario
-    desativar = DesativarVinculo(vinculos, registrar_acao)
-    desativar.executar(autor=AUTOR, vinculo_id=vinculo.id)
+    desativar = DesativarVinculo(vinculos, permissoes, registrar_acao)
+    desativar.executar(solicitante=SOLICITANTE, vinculo_id=vinculo.id)
 
     with pytest.raises(VinculoJaDesativado):
-        desativar.executar(autor=AUTOR, vinculo_id=vinculo.id)
+        desativar.executar(solicitante=SOLICITANTE, vinculo_id=vinculo.id)
 
     assert len(ler_historico_do_objeto(sessao, "vinculo", vinculo.id)) == 2
 
 
 def test_reativar_vinculo_ativo_e_recusado_sem_registro(
+    permissoes: Permissoes,
     sessao: Session,
     vinculos: Vinculos,
     registrar_acao: RegistrarAcao,
@@ -108,16 +119,21 @@ def test_reativar_vinculo_ativo_e_recusado_sem_registro(
     vinculo, _ = vinculos_do_usuario
 
     with pytest.raises(VinculoJaAtivo):
-        ReativarVinculo(vinculos, registrar_acao).executar(autor=AUTOR, vinculo_id=vinculo.id)
+        ReativarVinculo(vinculos, permissoes, registrar_acao).executar(
+            solicitante=SOLICITANTE, vinculo_id=vinculo.id
+        )
 
     assert len(ler_historico_do_objeto(sessao, "vinculo", vinculo.id)) == 1
 
 
 @pytest.mark.parametrize("caso_de_uso", [DesativarVinculo, ReativarVinculo])
 def test_vinculo_inexistente_e_recusado(
+    permissoes: Permissoes,
     vinculos: Vinculos,
     registrar_acao: RegistrarAcao,
     caso_de_uso: type[DesativarVinculo] | type[ReativarVinculo],
 ) -> None:
     with pytest.raises(VinculoNaoEncontrado):
-        caso_de_uso(vinculos, registrar_acao).executar(autor=AUTOR, vinculo_id=uuid4())
+        caso_de_uso(vinculos, permissoes, registrar_acao).executar(
+            solicitante=SOLICITANTE, vinculo_id=uuid4()
+        )

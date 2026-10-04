@@ -18,10 +18,11 @@ from assura.identidade import (
     VinculoJaExiste,
     Vinculos,
 )
+from assura.identidade.aplicacao.permissoes import Permissoes
 from assura.identidade.dominio.vinculo import Vinculo as EntidadeVinculo
 from tests.apoio import gerar_cnpj_valido
 from tests.identidade.apoio import (
-    AUTOR,
+    SOLICITANTE,
     cadastrar_empresa,
     cadastrar_usuario,
     ler_historico_do_objeto,
@@ -37,7 +38,7 @@ def vincular(
     empresa_id: UUID,
 ) -> Vinculo:
     return VincularUsuario(usuarios, empresas, vinculos, registrar_acao).executar(
-        autor=AUTOR,
+        solicitante=SOLICITANTE,
         usuario_id=usuario_id,
         empresa_id=empresa_id,
     )
@@ -81,6 +82,7 @@ def test_usuario_pode_ter_vinculo_com_varias_empresas(
 
 @pytest.mark.parametrize("desativar_antes", [False, True])
 def test_segundo_vinculo_com_a_mesma_empresa_e_recusado(
+    permissoes: Permissoes,
     usuarios: Usuarios,
     empresas: Empresas,
     vinculos: Vinculos,
@@ -91,7 +93,9 @@ def test_segundo_vinculo_com_a_mesma_empresa_e_recusado(
     empresa = cadastrar_empresa(empresas, registrar_acao)
     vinculo = vincular(usuarios, empresas, vinculos, registrar_acao, usuario.id, empresa.id)
     if desativar_antes:
-        DesativarVinculo(vinculos, registrar_acao).executar(autor=AUTOR, vinculo_id=vinculo.id)
+        DesativarVinculo(vinculos, permissoes, registrar_acao).executar(
+            solicitante=SOLICITANTE, vinculo_id=vinculo.id
+        )
 
     with pytest.raises(VinculoJaExiste):
         vincular(usuarios, empresas, vinculos, registrar_acao, usuario.id, empresa.id)
@@ -102,7 +106,9 @@ def test_empresa_desativada_nao_aceita_vinculo(
 ) -> None:
     usuario = cadastrar_usuario(usuarios, registrar_acao)
     empresa = cadastrar_empresa(empresas, registrar_acao)
-    DesativarEmpresa(empresas, registrar_acao).executar(autor=AUTOR, empresa_id=empresa.id)
+    DesativarEmpresa(empresas, registrar_acao).executar(
+        solicitante=SOLICITANTE, empresa_id=empresa.id
+    )
 
     with pytest.raises(EmpresaDesativadaNaoAceitaVinculo):
         vincular(usuarios, empresas, vinculos, registrar_acao, usuario.id, empresa.id)
