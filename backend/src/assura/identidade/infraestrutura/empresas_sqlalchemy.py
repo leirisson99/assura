@@ -2,10 +2,10 @@ from typing import Any
 from uuid import UUID
 
 from sqlalchemy import Executable, RowMapping, exists, func, insert, select, update
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from assura.compartilhado.dominio.pagina import Pagina
+from assura.compartilhado.infraestrutura.banco import executar_traduzindo_restricoes
 from assura.identidade.aplicacao.portas import Empresas
 from assura.identidade.dominio.cnpj import Cnpj
 from assura.identidade.dominio.empresa import Empresa, SituacaoDaEmpresa
@@ -58,19 +58,11 @@ class EmpresasSqlAlchemy:
         return [converter_em_empresa(linha) for linha in self._sessao.execute(consulta).mappings()]
 
     def _gravar(self, comando: Executable) -> None:
-        # O savepoint mantém a transação de quem chama utilizável quando o banco recusa o CNPJ.
-        try:
-            with self._sessao.begin_nested():
-                self._sessao.execute(comando)
-        except IntegrityError as erro:
-            if ler_restricao_violada(erro) == RESTRICAO_DE_CNPJ_UNICO:
-                raise CnpjJaCadastrado("já existe empresa com este CNPJ") from erro
-            raise
-
-
-def ler_restricao_violada(erro: IntegrityError) -> str | None:
-    diagnostico = getattr(erro.orig, "diag", None)
-    return getattr(diagnostico, "constraint_name", None)
+        executar_traduzindo_restricoes(
+            self._sessao,
+            comando,
+            {RESTRICAO_DE_CNPJ_UNICO: lambda: CnpjJaCadastrado("já existe empresa com este CNPJ")},
+        )
 
 
 def converter_em_colunas(empresa: Empresa) -> dict[str, Any]:

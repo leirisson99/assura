@@ -25,6 +25,11 @@ class TipoDeAcao(StrEnum):
     EMPRESA_ALTERADA = "empresa_alterada"
     EMPRESA_DESATIVADA = "empresa_desativada"
     EMPRESA_REATIVADA = "empresa_reativada"
+    USUARIO_CADASTRADO = "usuario_cadastrado"
+    USUARIO_ALTERADO = "usuario_alterado"
+    USUARIO_VINCULADO = "usuario_vinculado"
+    VINCULO_DESATIVADO = "vinculo_desativado"
+    VINCULO_REATIVADO = "vinculo_reativado"
 
 
 class TipoDeAutor(StrEnum):

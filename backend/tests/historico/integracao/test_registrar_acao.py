@@ -45,10 +45,10 @@ def contar_acoes_de_exemplo(sessao: Session) -> int:
 
 
 def test_acao_registrada_fica_gravada_com_todos_os_dados(
-    sessao: Session, criar_empresa: Callable[[], UUID]
+    sessao: Session, criar_empresa: Callable[[], UUID], criar_usuario: Callable[[], UUID]
 ) -> None:
     empresa_id = criar_empresa()
-    usuario_id = uuid4()
+    usuario_id = criar_usuario()
 
     criar_registrar_acao(sessao).executar(
         autor=Autor.usuario(usuario_id),
@@ -140,6 +140,18 @@ def test_registro_com_empresa_inexistente_e_recusado(sessao: Session) -> None:
             tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
             objeto=OBJETO_DE_EXEMPLO,
             empresa_id=uuid4(),
+        )
+
+    assert contar_registros(sessao) == 0
+
+
+def test_registro_com_autor_inexistente_e_recusado(sessao: Session) -> None:
+    with pytest.raises(IntegrityError), sessao.begin_nested():
+        criar_registrar_acao(sessao).executar(
+            autor=Autor.usuario(uuid4()),
+            tipo_de_acao=TipoDeAcao.EMPRESA_CADASTRADA,
+            objeto=OBJETO_DE_EXEMPLO,
+            empresa_id=None,
         )
 
     assert contar_registros(sessao) == 0

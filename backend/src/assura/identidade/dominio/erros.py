@@ -28,3 +28,39 @@ class EmpresaJaDesativada(ErroDeIdentidade):
 
 class EmpresaJaAtiva(ErroDeIdentidade):
     pass
+
+
+class EmailInvalido(ErroDeIdentidade):
+    pass
+
+
+class EmailJaCadastrado(ErroDeIdentidade):
+    pass
+
+
+class NomeDeUsuarioInvalido(ErroDeIdentidade):
+    pass
+
+
+class UsuarioNaoEncontrado(ErroDeIdentidade):
+    pass
+
+
+class VinculoJaExiste(ErroDeIdentidade):
+    pass
+
+
+class VinculoNaoEncontrado(ErroDeIdentidade):
+    pass
+
+
+class VinculoJaDesativado(ErroDeIdentidade):
+    pass
+
+
+class VinculoJaAtivo(ErroDeIdentidade):
+    pass
+
+
+class EmpresaDesativadaNaoAceitaVinculo(ErroDeIdentidade):
+    pass
