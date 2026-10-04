@@ -4,6 +4,7 @@ from alembic import context
 from sqlalchemy import engine_from_config, pool
 
 import assura.historico.infraestrutura.tabela  # noqa: F401  registra a tabela nos metadados
+import assura.identidade.infraestrutura.tabela  # noqa: F401  registra a tabela nos metadados
 from assura.compartilhado.infraestrutura.banco import metadados
 from assura.configuracao import configuracao
 

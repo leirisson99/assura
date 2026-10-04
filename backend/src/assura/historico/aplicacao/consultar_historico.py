@@ -1,7 +1,8 @@
 from dataclasses import replace
 
+from assura.compartilhado.dominio.pagina import Pagina
 from assura.historico.aplicacao.portas import HistoricoDeAcoes
-from assura.historico.dominio.consulta import FiltroDoHistorico, Pagina, SolicitanteDaConsulta
+from assura.historico.dominio.consulta import FiltroDoHistorico, SolicitanteDaConsulta
 from assura.historico.dominio.registro_de_historico import RegistroDeHistorico
 
 

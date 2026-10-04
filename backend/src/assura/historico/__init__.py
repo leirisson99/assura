@@ -3,16 +3,16 @@
 Outros contextos usam apenas o que é exportado aqui, nunca a tabela diretamente.
 """
 
+from assura.compartilhado.dominio.pagina import Pagina, PaginaInvalida
 from assura.historico.aplicacao.consultar_historico import ConsultarHistorico
 from assura.historico.aplicacao.portas import HistoricoDeAcoes, Relogio
 from assura.historico.aplicacao.registrar_acao import RegistrarAcao
-from assura.historico.dominio.consulta import FiltroDoHistorico, Pagina, SolicitanteDaConsulta
+from assura.historico.dominio.consulta import FiltroDoHistorico, SolicitanteDaConsulta
 from assura.historico.dominio.erros import (
     AutorInvalido,
     ConsultaAOutraEmpresaNaoPermitida,
     ErroDoHistorico,
     ObjetoAfetadoInvalido,
-    PaginaInvalida,
     PeriodoInvalido,
     TipoDeAcaoDesconhecido,
 )

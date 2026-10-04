@@ -21,6 +21,11 @@ class TipoDeAcao(StrEnum):
     (ex.: EMPRESA_CADASTRADA = "empresa_cadastrada").
     """
 
+    EMPRESA_CADASTRADA = "empresa_cadastrada"
+    EMPRESA_ALTERADA = "empresa_alterada"
+    EMPRESA_DESATIVADA = "empresa_desativada"
+    EMPRESA_REATIVADA = "empresa_reativada"
+
 
 class TipoDeAutor(StrEnum):
     USUARIO = "usuario"

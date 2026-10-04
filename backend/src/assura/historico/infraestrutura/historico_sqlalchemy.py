@@ -1,8 +1,9 @@
 from sqlalchemy import ColumnElement, RowMapping, insert, select
 from sqlalchemy.orm import Session
 
+from assura.compartilhado.dominio.pagina import Pagina
 from assura.historico.aplicacao.portas import HistoricoDeAcoes
-from assura.historico.dominio.consulta import FiltroDoHistorico, Pagina
+from assura.historico.dominio.consulta import FiltroDoHistorico
 from assura.historico.dominio.registro_de_historico import (
     Autor,
     ObjetoAfetado,
